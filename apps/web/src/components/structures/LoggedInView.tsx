@@ -28,6 +28,7 @@ import { isOnlyCtrlOrCmdKeyEvent, Key } from "../../Keyboard";
 import PageTypes from "../../PageTypes";
 import MediaDeviceHandler from "../../MediaDeviceHandler";
 import dis from "../../dispatcher/dispatcher";
+import { type ActionPayload } from "../../dispatcher/payloads";
 import { type IMatrixClientCreds } from "../../utils/createMatrixClient";
 import SettingsStore from "../../settings/SettingsStore";
 import { SettingLevel } from "../../settings/SettingLevel";
@@ -42,7 +43,6 @@ import { type IOOBData, type IThreepidInvite } from "../../stores/ThreepidInvite
 import Modal from "../../Modal";
 import { getKeyBindingsManager } from "../../KeyBindingsManager";
 import { type IOpts } from "../../createRoom";
-import SpacePanel from "../views/spaces/SpacePanel";
 import { LegacyCallHandlerEvent } from "../../LegacyCallHandler";
 import AudioFeedArrayForLegacyCall from "../views/voip/AudioFeedArrayForLegacyCall";
 import { OwnProfileStore } from "../../stores/OwnProfileStore";
@@ -149,8 +149,19 @@ class LoggedInView extends React.Component<IProps, IState> {
         this._roomView = React.createRef();
     }
 
+    /** Ref đăng ký dispatcher cho nút thu gọn panel trái. */
+    private hgDispatcherRef?: string;
+
+    /** Nghe action toggle panel trái (do nút ở RoomHeader gửi). Gọi API của react-resizable-panels. */
+    private onHgAction = (payload: ActionPayload): void => {
+        if (payload.action === "hg_toggle_left_panel") {
+            this.getResizerViewModel().toggleLeftPanel();
+        }
+    };
+
     public componentDidMount(): void {
         document.addEventListener("keydown", this.onNativeKeyDown, false);
+        this.hgDispatcherRef = dis.register(this.onHgAction);
         this.context.legacyCallHandler.addListener(LegacyCallHandlerEvent.CallState, this.onCallState);
 
         this.updateServerNoticeEvents();
@@ -187,14 +198,21 @@ class LoggedInView extends React.Component<IProps, IState> {
         this.refreshBackgroundImage();
     }
 
+    private resizerUnsubscribe?: () => void;
+
     private getResizerViewModel(): ResizerViewModel {
         if (!this.resizerViewModel) {
             this.resizerViewModel = new ResizerViewModel();
+            this.resizerUnsubscribe = this.resizerViewModel.subscribe(() => {
+                this.forceUpdate();
+            });
         }
         return this.resizerViewModel;
     }
 
     private disposeResizerViewModel(): void {
+        this.resizerUnsubscribe?.();
+        this.resizerUnsubscribe = undefined;
         this.resizerViewModel?.dispose();
         this.resizerViewModel = undefined;
     }
@@ -229,6 +247,7 @@ class LoggedInView extends React.Component<IProps, IState> {
 
     public componentWillUnmount(): void {
         document.removeEventListener("keydown", this.onNativeKeyDown, false);
+        if (this.hgDispatcherRef) dis.unregister(this.hgDispatcherRef);
         this.context.legacyCallHandler.removeListener(LegacyCallHandlerEvent.CallState, this.onCallState);
         this._matrixClient.removeListener(ClientEvent.AccountData, this.onAccountData);
         this._matrixClient.removeListener(ClientEvent.Sync, this.onSync);
@@ -238,7 +257,7 @@ class LoggedInView extends React.Component<IProps, IState> {
         SettingsStore.unwatchSetting(this.compactLayoutWatcherRef);
         SettingsStore.unwatchSetting(this.backgroundImageWatcherRef);
         this.timezoneProfileUpdateRef?.forEach((s) => SettingsStore.unwatchSetting(s));
-        this.resizerViewModel?.dispose();
+        this.disposeResizerViewModel();
     }
 
     private onCallState = (): void => {
@@ -695,31 +714,32 @@ class LoggedInView extends React.Component<IProps, IState> {
         let content: React.ReactNode;
         const resizerViewModel = !moduleRenderer ? this.getResizerViewModel() : undefined;
         if (resizerViewModel && !moduleRenderer) {
-            // Resizable layout with a draggable separator. The SpacePanel lives inside GroupView
-            // (leftPanel omits it).
-            content = (
-                <GroupView vm={resizerViewModel}>
-                    <SpacePanel />
-                    <LeftResizablePanelView
-                        vm={resizerViewModel}
-                        className="mx_LeftPanel_panel"
-                        minSize="200px"
-                        maxSize="370px"
-                        defaultSize="370px"
-                    >
-                        {leftPanel}
-                    </LeftResizablePanelView>
-                    <SeparatorView className="mx_Separator" vm={resizerViewModel} />
-                    <Panel className="mx_LeftPanel_panel">{roomView}</Panel>
-                </GroupView>
-            );
+            // When collapsed, render without resizer/group view so the chat fills 100% of the screen.
+            if (resizerViewModel.getSnapshot().isCollapsed) {
+                content = <div className="mx_MainSplit_leftCollapsed">{roomView}</div>;
+            } else {
+                content = (
+                    <GroupView vm={resizerViewModel}>
+                        <LeftResizablePanelView
+                            vm={resizerViewModel}
+                            className="mx_LeftPanel_panel mx_LeftPanel_panel--sidebar"
+                            minSize="200px"
+                            maxSize="370px"
+                            defaultSize="370px"
+                        >
+                            {leftPanel}
+                        </LeftResizablePanelView>
+                        <SeparatorView className="mx_Separator" vm={resizerViewModel} />
+                        <Panel className="mx_LeftPanel_panel">{roomView}</Panel>
+                    </GroupView>
+                );
+            }
         } else {
             // Fallback layout for a module's full-screen view (e.g. multiroom) which must not use the
             // resizable layout above. The ResizeHandle is dropped for module views, which manage their
             // own layout.
             content = (
                 <>
-                    <SpacePanel />
                     {leftPanel}
                     {roomView}
                 </>

@@ -43,6 +43,30 @@ function memberEventDiff(ev: MatrixEvent): IDiff {
     return diff;
 }
 
+export function isHiddenAiStopOrAbortEvent(ev: MatrixEvent): boolean {
+    if (!ev || ev.getType() !== EventType.RoomMessage) return false;
+    const content = ev.getContent();
+    if (!content || typeof content.body !== "string") return false;
+    const b = content.body.trim().toLowerCase();
+    
+    // Luôn ẩn lệnh /stop do user gửi
+    if (b.startsWith("/stop")) return true;
+
+    // Ẩn các thông báo lỗi hủy hoặc ngắt kết nối ngắn từ bot (dưới 300 ký tự và chứa từ khóa abort)
+    if (b.length < 300 && (
+        b.includes("aborted") ||
+        b.includes("generation aborted") ||
+        b.includes("agent was aborted") ||
+        b.includes("error: agent was aborted") ||
+        b.includes("error: generation aborted") ||
+        b.includes("đã hủy tin nhắn")
+    )) {
+        return true;
+    }
+
+    return false;
+}
+
 /**
  * Determines whether the given event should be hidden from timelines.
  * @param ev The event
@@ -52,6 +76,9 @@ function memberEventDiff(ev: MatrixEvent): IDiff {
 export default function shouldHideEvent(ev: MatrixEvent, ctx?: IRoomState): boolean {
     // Hide all poll end events
     if (M_POLL_END.matches(ev.getType())) return true;
+
+    // Hide AI /stop commands and raw abort error messages
+    if (isHiddenAiStopOrAbortEvent(ev)) return true;
 
     // Accessing the settings store directly can be expensive if done frequently,
     // so we should prefer using cached values if a RoomContext is available

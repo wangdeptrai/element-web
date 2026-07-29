@@ -52,7 +52,7 @@ const RoomContext = createContext<RoomContextType>({
     canSelfRedact: false,
     canSendMessages: false,
     resizing: false,
-    layout: Layout.Group,
+    layout: Layout.Bubble,
     lowBandwidth: false,
     alwaysShowTimestamps: false,
     showTwelveHourTimestamps: false,

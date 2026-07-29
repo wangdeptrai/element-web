@@ -33,7 +33,7 @@ class MockViewModel extends BaseViewModel<ResizerViewSnapshot, unknown> implemen
     }
 
     public onLeftPanelResize: (panelSize: PanelSize) => void = vi.fn();
-    public setPanelHandle: (handle: PanelImperativeHandle) => void = vi.fn();
+    public setPanelHandle: (handle: PanelImperativeHandle | undefined) => void = vi.fn();
 }
 
 function renderPanel(initialSnapshot?: Partial<ResizerViewSnapshot>): MockViewModel {

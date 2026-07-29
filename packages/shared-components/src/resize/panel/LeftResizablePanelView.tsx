@@ -28,7 +28,7 @@ export interface LeftResizablePanelViewActions {
      * Pass the vm the object containing the API to interact with this panel.
      * @param handle Object that can be used to access the imperative methods of the panel.
      */
-    setPanelHandle: (handle: PanelImperativeHandle) => void;
+    setPanelHandle: (handle: PanelImperativeHandle | undefined) => void;
 }
 
 type Props = {
@@ -51,6 +51,9 @@ export function LeftResizablePanelView({
 
     useEffect(() => {
         if (panelRef) vm.setPanelHandle(panelRef);
+        return () => {
+            vm.setPanelHandle(undefined);
+        };
     }, [vm, panelRef]);
 
     const defaultSize = initialSize === undefined ? props.defaultSize : `${initialSize}%`;

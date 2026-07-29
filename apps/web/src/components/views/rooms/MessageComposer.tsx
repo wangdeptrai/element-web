@@ -18,7 +18,7 @@ import {
 } from "matrix-js-sdk/src/matrix";
 import { Tooltip } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/src/logger";
-import { LockOffIcon, SendSolidIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
+import { LockOffIcon, SendSolidIcon, StopSolidIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useCreateAutoDisposedViewModel } from "@element-hq/web-shared-components";
 
 import { _t } from "../../../languageHandler";
@@ -64,6 +64,8 @@ import { MessageComposerUrlPreviewViewModel } from "../../../viewmodels/composer
 import { useScopedRoomContext } from "../../../contexts/ScopedRoomContext";
 import PlatformPeg from "../../../PlatformPeg";
 import { useSettingValue } from "../../../hooks/useSettings";
+import { useAiGeneration } from "../../../hooks/useAiGeneration";
+import { useIframePanel } from "../../../hooks/useIframePanel";
 
 // The prefix used when persisting editor drafts to localstorage.
 export const WYSIWYG_EDITOR_STATE_STORAGE_PREFIX = "mx_wysiwyg_state_";
@@ -88,6 +90,24 @@ function SendButton(props: ISendButtonProps): JSX.Element {
     );
 }
 
+interface IStopButtonProps {
+    onClick: (ev: ButtonEvent) => void;
+}
+
+// Nút dừng câu trả lời AI đang được bot stream (kiểu ChatGPT).
+function StopButton(props: IStopButtonProps): JSX.Element {
+    return (
+        <AccessibleButton
+            className="mx_MessageComposer_stopMessage"
+            onClick={props.onClick}
+            title={_t("composer|stop_button_title")}
+            data-testid="stopgenerationbtn"
+        >
+            <StopSolidIcon />
+        </AccessibleButton>
+    );
+}
+
 interface IProps extends MatrixClientProps {
     room: Room;
     resizeNotifier: ResizeNotifier;
@@ -97,6 +117,10 @@ interface IProps extends MatrixClientProps {
     e2eStatus?: E2EStatus;
     compact?: boolean;
     urlPreviewVm: MessageComposerUrlPreviewViewModel;
+    /** Bot AI có đang sinh câu trả lời trong room này không (để hiện nút Stop). */
+    isGenerating: boolean;
+    /** Gửi tín hiệu yêu cầu bot dừng câu trả lời đang sinh. */
+    onStopGeneration: () => void;
 }
 
 interface IState {
@@ -724,14 +748,20 @@ export class MessageComposer extends React.Component<IProps, IState> {
                                     toggleButtonMenu={this.toggleButtonMenu}
                                 />
                             )}
-                            {showSendButton && (
-                                <SendButton
-                                    key="controls_send"
-                                    onClick={this.sendMessage}
-                                    title={
-                                        this.state.haveRecording ? _t("composer|send_button_voice_message") : undefined
-                                    }
-                                />
+                            {this.props.isGenerating ? (
+                                <StopButton key="controls_stop" onClick={this.props.onStopGeneration} />
+                            ) : (
+                                showSendButton && (
+                                    <SendButton
+                                        key="controls_send"
+                                        onClick={this.sendMessage}
+                                        title={
+                                            this.state.haveRecording
+                                                ? _t("composer|send_button_voice_message")
+                                                : undefined
+                                        }
+                                    />
+                                )
                             )}
                         </div>
                     </div>
@@ -743,7 +773,9 @@ export class MessageComposer extends React.Component<IProps, IState> {
 
 const MessageComposerWithMatrixClient = withMatrixClientHOC(MessageComposer);
 
-export default function MessageComposerWrapper(props: Omit<IProps, "mxClient" | "urlPreviewVm">): JSX.Element {
+export default function MessageComposerWrapper(
+    props: Omit<IProps, "mxClient" | "urlPreviewVm" | "isGenerating" | "onStopGeneration">,
+): JSX.Element {
     const { showUrlPreview } = useScopedRoomContext("showUrlPreview");
     const client = useMatrixClientContext();
     const urlPreviewBundle = useSettingValue("feature_msc4095_url_preview_bundle");
@@ -761,5 +793,18 @@ export default function MessageComposerWrapper(props: Omit<IProps, "mxClient" | 
         void urlPreviewVm.updateUrlPreviewVisible(showUrlPreview);
     }, [urlPreviewVm, showUrlPreview]);
 
-    return <MessageComposerWithMatrixClient {...props} urlPreviewVm={urlPreviewVm} />;
+    // Theo dõi trạng thái bot đang trả lời để đổi nút Send thành Stop.
+    const { isGenerating, stop } = useAiGeneration(props.room);
+
+    // Tự bật panel KPI khi nhận tin nhắn iframe (com.hegeo.iframe) trong room này.
+    useIframePanel(props.room);
+
+    return (
+        <MessageComposerWithMatrixClient
+            {...props}
+            urlPreviewVm={urlPreviewVm}
+            isGenerating={isGenerating}
+            onStopGeneration={stop}
+        />
+    );
 }

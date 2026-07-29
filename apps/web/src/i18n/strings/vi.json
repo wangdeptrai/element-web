@@ -533,6 +533,7 @@
         "send_button_title": "Gửi tin nhắn",
         "send_button_voice_message": "Gửi tin nhắn thoại",
         "send_voice_message": "Gửi tin nhắn thoại",
+        "stop_button_title": "Dừng tạo",
         "stop_voice_message": "Dừng ghi",
         "voice_message_button": "Tin nhắn thoại"
     },

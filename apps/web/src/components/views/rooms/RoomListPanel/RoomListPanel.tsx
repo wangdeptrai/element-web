@@ -6,7 +6,7 @@ Please see LICENSE files in the repository root for full details.
 */
 
 import React, { useState, useCallback, useContext } from "react";
-import { Flex, RoomListHeaderView, useCreateAutoDisposedViewModel } from "@element-hq/web-shared-components";
+import { Flex, RoomListHeaderView, useCreateAutoDisposedViewModel, UserMenu } from "@element-hq/web-shared-components";
 
 import { shouldShowComponent } from "../../../../customisations/helpers/UIComponents";
 import { UIComponent } from "../../../../settings/UIFeature";
@@ -20,6 +20,9 @@ import { type IState as IRovingTabIndexState } from "../../../../accessibility/R
 import { RoomListHeaderViewModel } from "../../../../viewmodels/room-list/RoomListHeaderViewModel";
 import { useMatrixClientContext } from "../../../../contexts/MatrixClientContext";
 import { SDKContext } from "../../../../contexts/SDKContext.ts";
+import defaultDispatcher from "../../../../dispatcher/dispatcher";
+import { UserMenuViewModel } from "../../../../viewmodels/menus/UserMenuViewModel";
+import { OwnProfileStore } from "../../../../stores/OwnProfileStore";
 
 type RoomListPanelProps = {
     /**
@@ -66,6 +69,18 @@ export const RoomListPanel: React.FC<RoomListPanelProps> = ({ activeSpace }) => 
         () => new RoomListHeaderViewModel({ matrixClient, spaceStore: sdkContext.spaceStore }),
     );
 
+    // Avatar (menu người dùng) — trước đây nằm ở SpacePanel bên trái, nay dời vào đầu
+    // danh sách phòng, cùng hàng với ô tìm kiếm. `true` = dạng thu gọn (chỉ icon avatar).
+    const userMenuVm = useCreateAutoDisposedViewModel(
+        () =>
+            new UserMenuViewModel(
+                { ownProfileStore: OwnProfileStore.instance },
+                defaultDispatcher,
+                matrixClient,
+                true,
+            ),
+    );
+
     return (
         <Flex
             as="nav"
@@ -77,7 +92,10 @@ export const RoomListPanel: React.FC<RoomListPanelProps> = ({ activeSpace }) => 
             onBlur={onBlur}
             onKeyDown={onKeyDown}
         >
-            {displayRoomSearch && <RoomListSearch activeSpace={activeSpace} />}
+            <div className="mx_RoomListPanel_header">
+                <UserMenu vm={userMenuVm} className="mx_UserMenu" />
+                {displayRoomSearch && <RoomListSearch activeSpace={activeSpace} />}
+            </div>
             <RoomListHeaderView vm={vm} />
             <RoomListView />
         </Flex>

@@ -57,43 +57,82 @@ export class ResizerViewModel
 
     public onLeftPanelResize = debounce((panelSize: PanelSize): void => {
         const newSize = panelSize.inPixels;
-        this.snapshot.merge({ isCollapsed: newSize === 0 });
+        const isCollapsed = newSize <= 1 || panelSize.asPercentage <= 0.5;
+        if (this.snapshot.current.isCollapsed !== isCollapsed) {
+            const lastSize = SettingsStore.getValue("RoomList.panelSize") ?? undefined;
+            this.snapshot.merge({
+                isCollapsed,
+                initialSize: isCollapsed ? 0 : lastSize,
+            });
+            SettingsStore.setValue("RoomList.isPanelCollapsed", null, SettingLevel.DEVICE, isCollapsed);
+        }
     }, 50);
 
     public onLeftPanelResized = (newSize: number): void => {
+        const roundedSize = Math.round(newSize);
+        const isCollapsed = roundedSize === 0 || newSize <= 0.5;
+        if (this.snapshot.current.isCollapsed !== isCollapsed) {
+            const lastSize = SettingsStore.getValue("RoomList.panelSize") ?? undefined;
+            this.snapshot.merge({
+                isCollapsed,
+                initialSize: isCollapsed ? 0 : lastSize,
+            });
+            SettingsStore.setValue("RoomList.isPanelCollapsed", null, SettingLevel.DEVICE, isCollapsed);
+        }
+        if (isCollapsed) return;
+
+        if (!this.panelHandle) return;
         // We don't want the panels to have fractional widths as that can cause blurry UI elements.
         if (!Number.isInteger(newSize)) {
-            this.panelHandle?.resize(`${Math.round(newSize)}%`);
+            try {
+                this.panelHandle.resize(`${roundedSize}%`);
+            } catch (e) {
+                // Ignore errors if group is unmounted during resize
+            }
             return;
         }
 
-        const isCollapsed = newSize === 0;
         // Store the size if the panel isn't collapsed.
-        if (!isCollapsed) {
-            SettingsStore.setValue("RoomList.panelSize", null, SettingLevel.DEVICE, newSize);
-        }
-        // Store whether the panel was collapsed.
-        // This is stored separately instead of being inferred from the stored panel size so that
-        // the panel can be restored to its last known non-zero width even after app reload, which
-        // we wouldn't be able to do if we stored panelSize as zero.
-        SettingsStore.setValue("RoomList.isPanelCollapsed", null, SettingLevel.DEVICE, isCollapsed);
+        SettingsStore.setValue("RoomList.panelSize", null, SettingLevel.DEVICE, newSize);
     };
 
-    public setPanelHandle = (handle: PanelImperativeHandle): void => {
+    public setPanelHandle = (handle: PanelImperativeHandle | undefined): void => {
         this.panelHandle = handle;
+    };
+
+    public toggleLeftPanel = (): void => {
+        const nextCollapsed = !this.snapshot.current.isCollapsed;
+        const lastSize = SettingsStore.getValue("RoomList.panelSize") ?? undefined;
+        this.snapshot.merge({
+            isCollapsed: nextCollapsed,
+            initialSize: nextCollapsed ? 0 : lastSize,
+        });
+        SettingsStore.setValue("RoomList.isPanelCollapsed", null, SettingLevel.DEVICE, nextCollapsed);
+        if (this.panelHandle) {
+            if (nextCollapsed) {
+                try {
+                    this.panelHandle.collapse();
+                } catch (e) {}
+            } else {
+                try {
+                    this.panelHandle.resize(`${lastSize ?? 100}%`);
+                } catch (e) {}
+            }
+        }
     };
 
     private onSeparatorClick = (): void => {
         // When panel is collapsed, single click should expand the panel.
-        if (this.panelHandle?.isCollapsed()) {
-            const lastSize = SettingsStore.getValue("RoomList.panelSize");
-            this.panelHandle.resize(`${lastSize ?? 100}%`);
+        if (this.snapshot.current.isCollapsed || this.panelHandle?.isCollapsed()) {
+            this.toggleLeftPanel();
         }
     };
 
     public onDoubleClick = (): void => {
         // When the panel is expanded, double click should collapse.
-        if (!this.panelHandle?.isCollapsed()) this.panelHandle?.collapse();
+        if (!this.snapshot.current.isCollapsed && !this.panelHandle?.isCollapsed()) {
+            this.toggleLeftPanel();
+        }
     };
 
     public onPointerUp = (): void => {

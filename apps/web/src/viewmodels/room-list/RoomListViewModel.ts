@@ -86,7 +86,8 @@ const SECTION_ONLY_FILTER_IDS: ReadonlySet<FilterId> = new Set<FilterId>(["favou
  */
 function getVisibleFilterIds(): FilterId[] {
     const areSectionsEnabled = SettingsStore.getValue("RoomList.showSections");
-    const filterIds = [...filterKeyToIdMap.values()];
+    // theo yêu cầu: chỉ hiển thị chip lọc "People" (ẩn Unreads / Rooms / Mentions / Favourites…)
+    const filterIds = [...filterKeyToIdMap.values()].filter((id) => id === "people");
     return areSectionsEnabled ? filterIds.filter((id) => !SECTION_ONLY_FILTER_IDS.has(id)) : filterIds;
 }
 

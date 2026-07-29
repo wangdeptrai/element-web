@@ -17,6 +17,7 @@ import RightPanelStore from "../../stores/right-panel/RightPanelStore";
 import MatrixClientContext from "../../contexts/MatrixClientContext";
 import RoomSummaryCardView from "../views/right_panel/RoomSummaryCardView";
 import WidgetCard from "../views/right_panel/WidgetCard";
+import PlaneCard from "../views/right_panel/PlaneCard";
 import UserInfo from "../views/right_panel/UserInfo";
 import ThirdPartyMemberInfo from "../views/rooms/ThirdPartyMemberInfo";
 import FilePanel from "./FilePanel";
@@ -275,6 +276,12 @@ export default class RightPanel extends React.Component<Props, IState> {
             case RightPanelPhases.Widget:
                 if (!!this.props.room && !!cardState?.widgetId) {
                     card = <WidgetCard room={this.props.room} widgetId={cardState.widgetId} onClose={this.onClose} />;
+                }
+                break;
+
+            case RightPanelPhases.Plane:
+                if (!!cardState?.planeUrl) {
+                    card = <PlaneCard url={cardState.planeUrl} onClose={this.onClose} />;
                 }
                 break;
         }

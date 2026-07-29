@@ -11,16 +11,16 @@ Please see LICENSE files in the repository root for full details.
     .mx_RoomView_statusArea,
     .mx_MessageComposer {
         width: 100%;
-        max-width: 1200px;
-        margin: 0 auto;
+        max-width: none !important;
+        margin: 0;
     }
 }
 
 .mx_EventTile[data-layout="bubble"],
 .mx_GenericEventListSummary[data-layout="bubble"] {
     --avatarSize: 32px;
-    --gutterSize: 11px;
-    --cornerRadius: 12px;
+    --gutterSize: 13px; /* thoáng hơn trong bong bóng (was 11px) */
+    --cornerRadius: 18px; /* bo tròn hiện đại hơn (was 12px) */
     --maxWidth: 70%;
 
     /* For both event tile and event list summary */
@@ -94,7 +94,8 @@ Please see LICENSE files in the repository root for full details.
         border-radius: 4px;
     }
 
-    &:hover,
+    /* Đã bỏ &:hover — không highlight nền khi rê chuột qua bong bóng tin (layout bubble).
+       Vẫn giữ nền cho trạng thái selected. */
     &.mx_EventTile_selected {
         &::before {
             background: $eventbubble-bg-hover;
@@ -275,6 +276,15 @@ Please see LICENSE files in the repository root for full details.
         }
 
         --backgroundColor: $eventbubble-self-bg;
+
+        /* Chữ trắng trên bong bóng accent đặc (kiểu iMessage/Messenger) */
+        .mx_EventTile_line {
+            color: var(--cpd-color-text-on-solid-primary);
+        }
+
+        .mx_MessageTimestamp {
+            color: color-mix(in srgb, var(--cpd-color-text-on-solid-primary) 72%, transparent);
+        }
     }
 
     .mx_EventTile_line {
@@ -363,10 +373,26 @@ Please see LICENSE files in the repository root for full details.
         padding: calc(var(--gutterSize) - 1px);
         padding-right: 60px; /* space for the timestamp */
         background: var(--backgroundColor);
+        /* Chiều sâu: nhấc bong bóng khỏi nền, cảm giác card chuyên nghiệp (không phải glow) */
+        box-shadow:
+            0 1px 2px rgba(16, 24, 40, 0.06),
+            0 6px 16px -8px rgba(16, 24, 40, 0.1);
+        /* tactile: bong bóng nhấc nhẹ + bóng sâu hơn khi rê chuột */
+        transition:
+            transform var(--hg-dur-short) var(--hg-ease-out),
+            box-shadow var(--hg-dur-short) var(--hg-ease-out);
 
         .mx_EventTile_content {
             padding: 1px;
         }
+    }
+
+    &:not(.mx_EventTile_noBubble):not(.mx_EventTile_alignedBetweenBubbles):hover
+        .mx_EventTile_line:not(.mx_EventTile_mediaLine) {
+        transform: translateY(-1px);
+        box-shadow:
+            0 2px 4px rgba(16, 24, 40, 0.08),
+            0 14px 30px -10px rgba(16, 24, 40, 0.16);
     }
 
     &.mx_EventTile_continuation[data-self="false"] .mx_EventTile_line {

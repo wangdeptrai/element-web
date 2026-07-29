@@ -530,11 +530,23 @@ export default class BasicMessageEditor extends React.Component<IProps, IState> 
             const autoComplete = model.autoComplete;
             switch (autocompleteAction) {
                 case KeyBindingAction.ForceCompleteAutocomplete:
-                case KeyBindingAction.CompleteAutocomplete:
+                    // Tab always confirms the highlighted suggestion (or opens the list).
                     this.historyManager.ensureLastChangesPushed(this.props.model);
                     this.modifiedFlag = true;
                     autoComplete.confirmCompletion();
                     handled = true;
+                    break;
+                case KeyBindingAction.CompleteAutocomplete:
+                    // Custom (hegeo): Enter only confirms a suggestion once the
+                    // user has actively moved the highlight with the arrow keys.
+                    // Otherwise leave the event unhandled so it bubbles up to the
+                    // composer and sends the message as usual.
+                    if (autoComplete.hasManualSelection()) {
+                        this.historyManager.ensureLastChangesPushed(this.props.model);
+                        this.modifiedFlag = true;
+                        autoComplete.confirmCompletion();
+                        handled = true;
+                    }
                     break;
                 case KeyBindingAction.PrevSelectionInAutocomplete:
                     autoComplete.selectPreviousSelection();

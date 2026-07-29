@@ -42,6 +42,10 @@ interface IState {
     shouldShowCompletions: boolean;
     hide: boolean;
     forceComplete: boolean;
+    // Custom (hegeo): true once the user has moved the highlight with the
+    // arrow keys. Used so that Enter only confirms a suggestion after the user
+    // has deliberately navigated the list.
+    manualSelection: boolean;
 }
 
 export default class Autocomplete extends React.PureComponent<IProps, IState> {
@@ -73,6 +77,8 @@ export default class Autocomplete extends React.PureComponent<IProps, IState> {
             hide: false,
 
             forceComplete: false,
+
+            manualSelection: false,
         };
     }
 
@@ -185,6 +191,9 @@ export default class Autocomplete extends React.PureComponent<IProps, IState> {
                 hide,
                 // Force complete is turned off each time since we can't edit the query in that case
                 forceComplete: false,
+                // Custom (hegeo): a fresh set of completions means the user has
+                // not navigated it yet, so Enter should not confirm anything.
+                manualSelection: false,
             },
             deferred.resolve,
         );
@@ -193,6 +202,12 @@ export default class Autocomplete extends React.PureComponent<IProps, IState> {
 
     public hasSelection(): boolean {
         return this.countCompletions() > 0 && this.state.selectionOffset !== 0;
+    }
+
+    // Custom (hegeo): true only when the user has actively moved the highlight
+    // with the arrow keys, so Enter can decide whether to confirm or send.
+    public hasManualSelection(): boolean {
+        return this.hasSelection() && this.state.manualSelection;
     }
 
     public countCompletions(): number {
@@ -228,6 +243,7 @@ export default class Autocomplete extends React.PureComponent<IProps, IState> {
             selectionOffset: 1,
             completions: [],
             completionList: [],
+            manualSelection: false,
         });
     };
 
@@ -264,7 +280,9 @@ export default class Autocomplete extends React.PureComponent<IProps, IState> {
     };
 
     private setSelection(selectionOffset: number): void {
-        this.setState({ selectionOffset, hide: false });
+        // Custom (hegeo): reached only via moveSelection (arrow keys), so mark
+        // that the user has deliberately navigated the completion list.
+        this.setState({ selectionOffset, hide: false, manualSelection: true });
         if (this.props.onSelectionChange) {
             this.props.onSelectionChange(selectionOffset - 1);
         }

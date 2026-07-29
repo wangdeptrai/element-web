@@ -20,3 +20,121 @@ a:not([data-kind]) {
         text-decoration: none;
     }
 }
+
+/* ==========================================================================
+   thehegeo — lớp token phụ cho việc tinh gọn giao diện (chỉ giá trị trình bày).
+   Bổ sung cho Compound; dùng chung cho cả theme sáng & tối.
+   Đổi accent/thương hiệu sau này chỉ cần sửa ở đây, không rải giá trị lẻ.
+   ========================================================================== */
+:root {
+    /* Font hiển thị (tiêu đề/tên phòng) — ghép Nunito với thân chữ Inter */
+    --hg-font-display: "Nunito", "Inter", var(--emoji-font-family), sans-serif;
+
+    /* Bo góc nhất quán */
+    --hg-radius-sm: 8px;
+    --hg-radius-md: 12px;
+    --hg-radius-lg: 16px;
+    --hg-radius-xl: 24px; /* thẻ lớn: khung nhập kiểu ChatGPT */
+
+    /* Ring focus — hiện tức thì, không animate */
+    --hg-focus-ring: 2px solid var(--cpd-color-border-focused);
+    --hg-focus-offset: 2px;
+
+    /* Easing (theo Hallmark) */
+    --hg-ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* phần tử đi vào */
+    --hg-ease-in: cubic-bezier(0.7, 0, 0.84, 0); /* phần tử đi ra */
+    --hg-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1); /* đảo trạng thái */
+
+    /* Thời lượng chuyển động */
+    --hg-dur-micro: 120ms; /* nhấn nút, đổi màu */
+    --hg-dur-short: 220ms; /* hover, tooltip, menu */
+    --hg-dur-long: 420ms; /* vào-màn, panel, drawer */
+    --hg-dur-1: 160ms;
+    --hg-dur-2: 220ms;
+}
+
+/* Bôi chọn văn bản tô nhẹ theo accent — chi tiết "crafted", chống đơn điệu */
+::selection {
+    background-color: color-mix(in srgb, var(--cpd-color-bg-accent-rest) 30%, transparent);
+}
+
+/* Hiệu ứng "vào-màn" dùng lại — một entrance có tổ chức, chỉ transform/opacity */
+@keyframes hg-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* Nền khu tin nhắn "có chất" thay vì một khối màu phẳng: ánh accent rất nhạt ở góc trên
+   + hạt grain mịn (đúng Hallmark: gradient 2-điểm + feTurbulence < 0.1 opacity; KHÔNG aurora slop). */
+.mx_RoomView_messagePanel {
+    background-color: var(--cpd-color-bg-subtle-primary);
+    background-image:
+        radial-gradient(
+            1100px 620px at 100% -8%,
+            color-mix(in srgb, var(--cpd-color-bg-accent-rest) 8%, transparent),
+            transparent 55%
+        ),
+        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="140" height="140"><filter id="g"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/></filter><rect width="140" height="140" filter="url(%23g)" opacity="0.04"/></svg>');
+    background-repeat: no-repeat, repeat;
+    background-size: auto, 140px 140px;
+    background-attachment: local, fixed;
+}
+
+/* Mỗi tin nhắn "trượt vào" nhẹ khi xuất hiện — hiệu ứng chat mượt, có chủ đích. */
+.mx_EventTile {
+    animation: hg-fade-in var(--hg-dur-short) var(--hg-ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mx_EventTile {
+        animation: none;
+    }
+}
+
+/* Ẩn hẳn mọi toast thông báo ở góc (vd "Turn on key storage") theo yêu cầu —
+   không hiển thị thông báo nào. Lưu ý: cũng ẩn các nhắc nhở bảo mật/xác minh. */
+.mx_ToastContainer,
+.mx_NonUrgentToastContainer {
+    display: none !important;
+}
+
+/* Thu gọn danh sách phòng: khi bật, LoggedInView bỏ HẲN cột trái + resizer và render khung chat
+   trong container này. Container phải lấp đầy .mx_MatrixChat theo cả 2 chiều để khung chat nở toàn màn. */
+.mx_MainSplit_leftCollapsed {
+    display: flex !important;
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.mx_MainSplit_leftCollapsed > .mx_RoomView_wrapper {
+    display: flex !important;
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Gỡ bỏ giới hạn max-width 1200px mặc định trong layout bong bóng (bubble layout)
+   để khung tin nhắn và ô nhập liệu mở rộng tràn đầy 100% chiều ngang màn hình. */
+.mx_RoomView_body[data-layout="bubble"] .mx_RoomView_timeline,
+.mx_RoomView_body[data-layout="bubble"] .mx_RoomView_statusArea,
+.mx_RoomView_body[data-layout="bubble"] .mx_MessageComposer,
+.mx_MainSplit_leftCollapsed .mx_RoomView_timeline,
+.mx_MainSplit_leftCollapsed .mx_RoomView_statusArea,
+.mx_MainSplit_leftCollapsed .mx_MessageComposer {
+    max-width: none !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}

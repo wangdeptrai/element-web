@@ -39,17 +39,13 @@ export class UserMenuViewModel
         client: MatrixClient,
         ownProfileStore: OwnProfileStore,
         isPanelCollapsed: boolean,
+        setStatusViewModel: SetStatusViewModel,
     ): UserMenuSnapshot {
         const hasHomePage = !!getHomePageUrl(SdkConfig.get(), client);
         const isAuthenticated = !client.isGuest();
         const userId = client.getSafeUserId();
         const displayName = ownProfileStore.displayName || userId;
         const avatarUrl = ownProfileStore.getHttpAvatarUrl(AVATAR_PX) ?? undefined;
-
-        const setStatusViewModel = new UserMenuSetStatusViewModel({
-            client,
-            ownProfileStore,
-        });
 
         return {
             open: false,
@@ -80,8 +76,9 @@ export class UserMenuViewModel
         private readonly client: MatrixClient,
         isPanelCollapsed: boolean,
     ) {
-        super(props, UserMenuViewModel.computeSnapshot(client, props.ownProfileStore, isPanelCollapsed));
-        this.setStatusVm = new UserMenuSetStatusViewModel({ client, ownProfileStore: props.ownProfileStore });
+        const setStatusVm = new UserMenuSetStatusViewModel({ client, ownProfileStore: props.ownProfileStore });
+        super(props, UserMenuViewModel.computeSnapshot(client, props.ownProfileStore, isPanelCollapsed, setStatusVm));
+        this.setStatusVm = setStatusVm;
         props.ownProfileStore.on(UPDATE_EVENT, this.recalculateProfile);
         this.loadAuthMetadata();
     }

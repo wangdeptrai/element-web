@@ -20,7 +20,9 @@ $left-gutter: 64px;
     flex-shrink: 0;
     max-width: 100%;
     clear: both; /* TODO: check if this is necessary */
-    padding-top: 18px;
+    /* Khoảng thở giữa các cụm tin khác người gửi (tin liên tiếp cùng người vẫn sát nhau,
+       nhờ .mx_EventTile_continuation { padding-top: 0 }). Trước là 18px. */
+    padding-top: var(--cpd-space-6x);
     position: relative;
 
     &.mx_EventTile_info {
@@ -87,7 +89,8 @@ $left-gutter: 64px;
 
     .mx_DisambiguatedProfile {
         color: $primary-content;
-        font: var(--cpd-font-body-md-regular);
+        /* Tên người gửi đậm hơn (semibold) → phân cấp rõ, dễ quét ai nói gì */
+        font: var(--cpd-font-body-md-semibold);
         display: inline-block;
         padding-bottom: 0px;
         padding-top: 0px;
@@ -222,11 +225,8 @@ $left-gutter: 64px;
             clear: both;
         }
 
-        &:hover {
-            .mx_EventTile_line {
-                background-color: $event-selected-color;
-            }
-        }
+        /* Đã bỏ: highlight nền ("mảng tối") khi rê chuột qua tin nhắn — layout group/irc.
+           Vẫn giữ nền cho trạng thái selected / focus / @mention (các rule ở trên). */
     }
 
     &[data-layout="bubble"],
@@ -680,6 +680,7 @@ $left-gutter: 64px;
             }
 
             border: 1px solid $quinary-content;
+            border-radius: var(--hg-radius-sm); /* bo góc khối code cho gọn, đồng bộ hệ thống */
 
             code {
                 white-space: pre; /* we want code blocks to be scrollable and not wrap */

@@ -41,7 +41,8 @@ import {
     renderMBody,
 } from "./MBodyFactory";
 import { TextualBodyFactory } from "./TextualBodyFactory";
-
+import MIframeBody from "./MIframeBody";
+import { extractIframeUrl } from "../../../hooks/useIframePanel";
 // onMessageAllowed is handled internally
 interface IProps extends Omit<IBodyProps, "onMessageAllowed" | "mediaEventHelper"> {
     /* overrides for the msgtype-specific components, used by ReplyTile to override file rendering */
@@ -64,6 +65,7 @@ export interface IOperableEventTile {
 }
 
 const baseBodyTypes = new Map<string, React.ComponentType<IBodyProps>>([
+    ["com.hegeo.iframe", MIframeBody],
     [MsgType.Text, TextualBodyFactory],
     [MsgType.Notice, TextualBodyFactory],
     [MsgType.Emote, TextualBodyFactory],
@@ -315,6 +317,10 @@ export default class MessageEvent extends React.Component<IProps> implements IMe
             [MsgType.Image, MsgType.File, MsgType.Audio, MsgType.Video].includes(msgtype as MsgType) &&
             content.filename &&
             content.filename !== content.body;
+            
+        const iframeUrl = extractIframeUrl(this.props.mxEvent);
+        const isMTextWithIframe = msgtype === MsgType.Text && !!iframeUrl;
+
         const bodyProps: IBodyProps = {
             ref: this.body,
             mxEvent: this.props.mxEvent,
@@ -335,6 +341,15 @@ export default class MessageEvent extends React.Component<IProps> implements IMe
         };
         if (hasCaption) {
             return <CaptionBody {...bodyProps} WrappedBodyType={BodyType} />;
+        }
+
+        if (isMTextWithIframe) {
+            return (
+                <div className="mx_EventTile_content">
+                    {BodyType ? <BodyType {...bodyProps} /> : null}
+                    <MIframeBody mxEvent={this.props.mxEvent} />
+                </div>
+            );
         }
 
         return BodyType ? <BodyType {...bodyProps} /> : null;

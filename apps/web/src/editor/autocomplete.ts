@@ -44,6 +44,12 @@ export default class AutocompleteWrapperModel {
         return !!this.getAutocompleterComponent()?.hasSelection();
     }
 
+    // Custom (hegeo): true only when the user has moved the highlight with the
+    // arrow keys, so Enter confirms deliberately-chosen suggestions only.
+    public hasManualSelection(): boolean {
+        return !!this.getAutocompleterComponent()?.hasManualSelection();
+    }
+
     public hasCompletions(): boolean {
         const ac = this.getAutocompleterComponent();
         return !!ac && ac.countCompletions() > 0;

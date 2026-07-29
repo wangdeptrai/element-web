@@ -25,6 +25,8 @@ export interface IRightPanelCardState {
     initialEventScrollIntoView?: boolean;
     // room summary
     focusRoomSearch?: boolean;
+    // Custom (hegeo): URL to embed in the Plane/KPI card
+    planeUrl?: string;
 }
 
 export interface IRightPanelCardStateStored {
@@ -38,6 +40,8 @@ export interface IRightPanelCardStateStored {
     initialEventId?: string;
     isInitialEventHighlighted?: boolean;
     initialEventScrollIntoView?: boolean;
+    // Custom (hegeo): URL to embed in the Plane/KPI card
+    planeUrl?: string;
 }
 
 export interface IRightPanelCard {
@@ -76,6 +80,7 @@ export function convertCardToStore(panelState: IRightPanelCard): IRightPanelCard
     const state = panelState.state ?? {};
     const stateStored: IRightPanelCardStateStored = {
         widgetId: state.widgetId,
+        planeUrl: state.planeUrl,
         isInitialEventHighlighted: state.isInitialEventHighlighted,
         initialEventScrollIntoView: state.initialEventScrollIntoView,
         threadHeadEventId: !!state?.threadHeadEvent?.getId() ? state.threadHeadEvent.getId() : undefined,
@@ -91,6 +96,7 @@ function convertStoreToCard(panelStateStore: IRightPanelCardStored, room: Room):
     const stateStored = panelStateStore.state ?? {};
     const state: IRightPanelCardState = {
         widgetId: stateStored.widgetId,
+        planeUrl: stateStored.planeUrl,
         isInitialEventHighlighted: stateStored.isInitialEventHighlighted,
         initialEventScrollIntoView: stateStored.initialEventScrollIntoView,
         threadHeadEvent: !!stateStored?.threadHeadEventId

@@ -66,21 +66,30 @@ describe("CommandProvider", () => {
         const provider = new CommandProvider(room);
 
         // When we search for a disabled command with arguments
-        const completions = await provider.getCompletions("/disabled test", {
-            beginning: true,
-            start: 0,
-            end: 14,
-        });
+        // (force = true because command completions only surface on Tab)
+        const completions = await provider.getCompletions(
+            "/disabled test",
+            {
+                beginning: true,
+                start: 0,
+                end: 14,
+            },
+            true,
+        );
 
         // Then we should get no completions because the command is disabled
         expect(completions).toEqual([]);
 
         // When we search for an enabled command with arguments
-        const enabledCompletions = await provider.getCompletions("/enabled test", {
-            beginning: true,
-            start: 0,
-            end: 13,
-        });
+        const enabledCompletions = await provider.getCompletions(
+            "/enabled test",
+            {
+                beginning: true,
+                start: 0,
+                end: 13,
+            },
+            true,
+        );
 
         // Then we should get the completion because the command is enabled
         // The completion preserves the arguments when the command matches

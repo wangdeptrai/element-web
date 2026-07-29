@@ -450,7 +450,7 @@
         "access_token": "Access Token",
         "accessibility": "Accessibility",
         "advanced": "Advanced",
-        "all_chats": "All Chats",
+        "all_chats": "All Chats 1",
         "analytics": "Analytics",
         "and_n_others": {
             "one": "and one other...",
@@ -638,6 +638,7 @@
         "send_button_title": "Send message",
         "send_button_voice_message": "Send voice message",
         "send_voice_message": "Send voice message",
+        "stop_button_title": "Stop generating",
         "stop_voice_message": "Stop recording",
         "voice_message_button": "Voice Message"
     },

@@ -45,7 +45,7 @@ const GenericEventListSummary: React.FC<IProps> = ({
     startExpanded = false,
     summaryMembers,
     summaryText,
-    layout = Layout.Group,
+    layout = Layout.Bubble,
     "data-testid": testId,
 }) => {
     const [expanded, toggleExpanded] = useStateToggle(startExpanded);

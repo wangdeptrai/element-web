@@ -12,7 +12,8 @@ Please see LICENSE files in the repository root for full details.
     padding: 0 var(--cpd-space-3x) 0 calc(var(--cpd-space-3x) + var(--cpd-space-1-5x));
     border-bottom: 1px solid $separator;
     background-color: $background;
-    transition: all 0.2s ease;
+    /* Chỉ animate màu nền (bỏ transition: all cho gọn/mượt) */
+    transition: background-color var(--hg-dur-1) ease;
 
     button:has(svg.mx_RoomHeader_toggled) {
         /* For enhanced visibility under contrast control */
@@ -42,9 +43,9 @@ Please see LICENSE files in the repository root for full details.
 }
 
 .mx_RoomHeader_info {
-    /* We want the spacing to be 64px, 13x = 52px but we have a flex gap of
-       12px set on the flex container, which sums up to 64 */
-    padding-right: var(--cpd-space-13x);
+    /* Trước đây chừa 52px (13x) để né cụm nút call/video/threads/facepile.
+       Nay các nút đó đã bỏ (chỉ còn nút ⓘ) nên thu lại cho tên phòng thoáng, cân đối. */
+    padding-right: var(--cpd-space-2x);
 }
 
 .mx_RoomHeader_truncated {
@@ -61,6 +62,11 @@ Please see LICENSE files in the repository root for full details.
     display: flex;
     gap: var(--cpd-space-1x);
     align-items: center;
+    /* Tên phòng dùng font hiển thị Nunito, đậm & lớn hơn → phân cấp rõ, bớt đơn điệu */
+    font-family: var(--hg-font-display);
+    font-weight: 700;
+    font-size: 1.25rem;
+    letter-spacing: -0.01em;
 }
 
 .mx_RoomHeader_icon {

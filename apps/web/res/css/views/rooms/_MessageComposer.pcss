@@ -6,13 +6,30 @@ SPDX-License-Identifier: AGPL-3.0-only OR GPL-3.0-only OR LicenseRef-Element-Com
 Please see LICENSE files in the repository root for full details.
 */
 
+/* Khung nhập kiểu AI-chat (ChatGPT/Claude): một THẺ bo tròn nổi, có viền + bóng, tách khỏi đáy.
+   Thay cho thanh phẳng chỉ có 1 đường viền trên. */
 .mx_MessageComposer_wrapper {
     vertical-align: middle;
-    margin: auto;
-    border-top: 1px solid $primary-hairline-color;
     position: relative;
-    padding-left: 42px;
-    padding-right: 16px;
+    margin: var(--cpd-space-1x) var(--cpd-space-4x) var(--cpd-space-4x);
+    padding: var(--cpd-space-1-5x) var(--cpd-space-3x) var(--cpd-space-1-5x) 42px;
+    background: var(--cpd-color-bg-canvas-default);
+    border: 1px solid var(--cpd-color-border-interactive-secondary);
+    border-radius: var(--hg-radius-xl);
+    box-shadow:
+        0 1px 2px rgba(16, 24, 40, 0.05),
+        0 14px 34px -18px rgba(16, 24, 40, 0.22);
+    transition:
+        border-color var(--hg-dur-short) var(--hg-ease-out),
+        box-shadow var(--hg-dur-short) var(--hg-ease-out);
+}
+
+/* Focus: viền accent + quầng sáng mảnh (kiểu ô nhập AI khi đang gõ) */
+.mx_MessageComposer_wrapper:focus-within {
+    border-color: var(--cpd-color-border-interactive-primary);
+    box-shadow:
+        0 0 0 3px color-mix(in srgb, var(--cpd-color-bg-accent-rest) 16%, transparent),
+        0 14px 34px -18px rgba(16, 24, 40, 0.24);
 }
 
 .mx_MessageComposer_replaced_wrapper {
@@ -220,6 +237,42 @@ Please see LICENSE files in the repository root for full details.
     background-color: var(--cpd-color-icon-accent-tertiary);
     height: 16px;
     width: 16px;
+    /* Phản hồi tương tác cho nút gửi (trước đây không có trạng thái nào) */
+    transition:
+        background-color var(--hg-dur-micro) var(--hg-ease-out),
+        transform var(--hg-dur-micro) var(--hg-ease-out);
+
+    &:hover {
+        background-color: var(--cpd-color-icon-accent-primary); /* accent đậm hơn */
+        transform: translateY(-1px); /* nhấc nhẹ lên (Hallmark) */
+    }
+
+    &:active {
+        transform: translateY(0); /* nhấn xuống lại khi bấm */
+    }
+
+    &:focus-visible {
+        outline: var(--hg-focus-ring);
+        outline-offset: var(--hg-focus-offset);
+    }
+
+    svg {
+        height: inherit;
+        width: inherit;
+
+        color: var(--cpd-color-icon-on-solid-primary);
+    }
+}
+
+/* Nút dừng câu trả lời AI đang stream (kiểu ChatGPT). */
+.mx_MessageComposer_stopMessage {
+    cursor: pointer;
+    position: relative;
+    padding: var(--cpd-space-2x);
+    border-radius: 100%;
+    background-color: var(--cpd-color-icon-primary);
+    height: 16px;
+    width: 16px;
 
     svg {
         height: inherit;
@@ -266,5 +319,12 @@ Please see LICENSE files in the repository root for full details.
 
     .mx_MessageComposer_e2eIcon {
         left: 0;
+    }
+}
+
+/* Tinh gọn: tôn trọng giảm chuyển động — tắt hiệu ứng nút gửi */
+@media (prefers-reduced-motion) {
+    .mx_MessageComposer_sendMessage {
+        transition: none;
     }
 }

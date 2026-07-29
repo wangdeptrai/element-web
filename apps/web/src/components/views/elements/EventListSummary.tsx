@@ -87,7 +87,7 @@ export default class EventListSummary extends React.Component<Props, State> {
         summaryLength: 1,
         threshold: 3,
         avatarsMaxLength: 5,
-        layout: Layout.Group,
+        layout: Layout.Bubble,
     };
 
     public constructor(props: Props) {

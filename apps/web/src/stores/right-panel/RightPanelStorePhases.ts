@@ -21,6 +21,8 @@ export enum RightPanelPhases {
     EncryptionPanel = "EncryptionPanel",
     RoomSummary = "RoomSummary",
     Widget = "Widget",
+    // Custom (hegeo): a card that embeds an arbitrary URL (e.g. the KPI screen) in the right panel
+    Plane = "Plane",
     PinnedMessages = "PinnedMessages",
     Timeline = "Timeline",
     Extensions = "Extensions",

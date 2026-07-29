@@ -45,6 +45,12 @@ export default class CommandProvider extends AutocompleteProvider {
         const { command, range } = this.getCurrentCommand(query, selection);
         if (!command) return [];
 
+        // Custom (hegeo): don't auto-open the command list while typing `/`.
+        // Only surface command suggestions when the user explicitly asks for
+        // them by pressing Tab (force === true). This stops the whole list from
+        // popping up on `/` and from hijacking Enter.
+        if (!force) return [];
+
         const cli = MatrixClientPeg.get();
 
         let matches: Command[] = [];

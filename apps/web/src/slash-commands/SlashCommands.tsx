@@ -30,6 +30,8 @@ import MultiInviter from "../utils/MultiInviter";
 import { topicToHtml } from "../HtmlUtils";
 import QuestionDialog from "../components/views/dialogs/QuestionDialog";
 import WidgetUtils from "../utils/WidgetUtils";
+import RightPanelStore from "../stores/right-panel/RightPanelStore";
+import { RightPanelPhases } from "../stores/right-panel/RightPanelStorePhases";
 import { textToHtmlRainbow } from "../utils/colour";
 import { AddressType, getAddressType } from "../UserAddress";
 import { abbreviateUrl } from "../utils/UrlUtils";
@@ -586,6 +588,26 @@ export const Commands = [
             }
         },
         category: CommandCategories.admin,
+        renderingTypes: [TimelineRenderingType.Room],
+    }),
+    // Custom (hegeo): open a URL (e.g. the KPI screen) in the right-panel PlaneCard.
+    // Handy for testing the panel manually without the backend.
+    new Command({
+        command: "kpi",
+        args: "<url>",
+        description: "Mở URL trong panel KPI (bên phải)" as TranslationKey,
+        runFn: function (_cli, roomId, _threadId, args) {
+            const url = args?.trim();
+            if (!url) {
+                return reject(new UserFriendlyError("Cần cung cấp URL, ví dụ: /kpi https://..." as TranslationKey));
+            }
+            if (!url.startsWith("https://") && !url.startsWith("http://")) {
+                return reject(new UserFriendlyError("URL phải bắt đầu bằng http:// hoặc https://" as TranslationKey));
+            }
+            RightPanelStore.instance.setCard({ phase: RightPanelPhases.Plane, state: { planeUrl: url } }, true, roomId);
+            return success();
+        },
+        category: CommandCategories.actions,
         renderingTypes: [TimelineRenderingType.Room],
     }),
     new Command({

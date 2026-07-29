@@ -58,6 +58,7 @@ import { ViewSourceEventViewModel } from "../viewmodels/room/timeline/event-tile
 import { ElementCallEventType } from "../call-types";
 import { RootCallTileViewModel } from "../viewmodels/room/timeline/event-tile/call/RootCallTileViewModel";
 import { SDKContext } from "../contexts/SDKContext";
+import { isHiddenAiStopOrAbortEvent } from "../shouldHideEvent";
 
 // Subset of EventTile's IProps plus some mixins
 export interface EventTileTypeProps extends Pick<
@@ -555,6 +556,9 @@ export function haveRendererForEvent(
 
     // No tile for replacement events since they update the original tile
     if (mxEvent.isRelation(RelationType.Replace)) return false;
+
+    // Hide AI /stop commands and raw abort error messages
+    if (!showHiddenEvents && isHiddenAiStopOrAbortEvent(mxEvent)) return false;
 
     const handler = pickFactory(mxEvent, matrixClient, showHiddenEvents);
     if (!handler) return false;
