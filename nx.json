@@ -9,5 +9,10 @@
     "namedInputs": {
         "src": ["{projectRoot}/src/**/*"]
     },
+    "pluginsConfig": {
+        "@nx/js": {
+            "analyzeLockfile": false
+        }
+    },
     "analytics": false
 }
