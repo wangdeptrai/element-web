@@ -6,21 +6,18 @@
  */
 
 .mx_RoomListPanel {
-    /* Nền panel riêng (khác canvas của timeline) → phân lớp 3 cột, có chiều sâu, bớt đơn điệu.
-       Dùng đúng token "panels" của Element ($panels = bg-subtle-secondary). */
-    background-color: var(--cpd-color-bg-subtle-secondary);
+    /* Bề mặt cột trái + đường chỉ ngăn với canvas: xem _hg-polish.pcss §3. */
     height: 100%;
 }
 
 /* Hàng đầu danh sách phòng: avatar (menu người dùng) + ô tìm kiếm, cùng một dòng.
-   Thay cho cột SpacePanel bên trái đã bỏ. Cao 64px cho khớp với header phòng. */
+   Thay cho cột SpacePanel bên trái đã bỏ. Cao 64px cho khớp với header phòng —
+   hai cột cắt nhau trên đúng MỘT đường ngang. */
 .mx_RoomListPanel_header {
     display: flex;
     align-items: center;
     height: 64px;
     box-sizing: border-box;
-    padding-left: var(--cpd-space-3x);
-    border-bottom: var(--cpd-border-width-1) solid var(--cpd-color-bg-subtle-primary);
 
     /* Avatar: bỏ margin dọc vốn dành cho thanh rail dọc; giữ gọn trong hàng. */
     .mx_UserMenu {

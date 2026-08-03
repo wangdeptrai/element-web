@@ -6,30 +6,14 @@ SPDX-License-Identifier: AGPL-3.0-only OR GPL-3.0-only OR LicenseRef-Element-Com
 Please see LICENSE files in the repository root for full details.
 */
 
-/* Khung nhập kiểu AI-chat (ChatGPT/Claude): một THẺ bo tròn nổi, có viền + bóng, tách khỏi đáy.
-   Thay cho thanh phẳng chỉ có 1 đường viền trên. */
+/* Khung nhập kiểu AI-chat: một THẺ bo tròn nổi, tách khỏi đáy màn hình.
+   Bề mặt, viền, độ nổi và trạng thái focus do Quietwork đảm nhiệm
+   (_hg-polish.pcss §8) để giá trị đổ bóng đổi theo theme sáng/tối. */
 .mx_MessageComposer_wrapper {
     vertical-align: middle;
     position: relative;
     margin: var(--cpd-space-1x) var(--cpd-space-4x) var(--cpd-space-4x);
     padding: var(--cpd-space-1-5x) var(--cpd-space-3x) var(--cpd-space-1-5x) 42px;
-    background: var(--cpd-color-bg-canvas-default);
-    border: 1px solid var(--cpd-color-border-interactive-secondary);
-    border-radius: var(--hg-radius-xl);
-    box-shadow:
-        0 1px 2px rgba(16, 24, 40, 0.05),
-        0 14px 34px -18px rgba(16, 24, 40, 0.22);
-    transition:
-        border-color var(--hg-dur-short) var(--hg-ease-out),
-        box-shadow var(--hg-dur-short) var(--hg-ease-out);
-}
-
-/* Focus: viền accent + quầng sáng mảnh (kiểu ô nhập AI khi đang gõ) */
-.mx_MessageComposer_wrapper:focus-within {
-    border-color: var(--cpd-color-border-interactive-primary);
-    box-shadow:
-        0 0 0 3px color-mix(in srgb, var(--cpd-color-bg-accent-rest) 16%, transparent),
-        0 14px 34px -18px rgba(16, 24, 40, 0.24);
 }
 
 .mx_MessageComposer_replaced_wrapper {
@@ -139,14 +123,16 @@ Please see LICENSE files in the repository root for full details.
         overflow: auto;
 
         /* hack for FF as vertical alignment of custom placeholder text is broken */
+        /* Chỗ giữ chỗ dùng màu chữ phụ, không dùng accent: ô rỗng không nên
+           trông như đang chứa nội dung quan trọng. */
         &::-moz-placeholder {
             line-height: 100%;
-            color: $accent;
+            color: $secondary-content;
             opacity: 1;
         }
 
         &::-webkit-input-placeholder {
-            color: $accent;
+            color: $secondary-content;
         }
     }
 }
@@ -229,31 +215,15 @@ Please see LICENSE files in the repository root for full details.
     }
 }
 
+/* Nút gửi và nút dừng dùng chung hình dạng/kích thước (xem _hg-polish.pcss §8)
+   nên khung nhập không giật khi bot bắt đầu hoặc kết thúc trả lời. */
 .mx_MessageComposer_sendMessage {
     cursor: pointer;
     position: relative;
-    padding: var(--cpd-space-2x);
-    border-radius: 100%;
     background-color: var(--cpd-color-icon-accent-tertiary);
-    height: 16px;
-    width: 16px;
-    /* Phản hồi tương tác cho nút gửi (trước đây không có trạng thái nào) */
-    transition:
-        background-color var(--hg-dur-micro) var(--hg-ease-out),
-        transform var(--hg-dur-micro) var(--hg-ease-out);
 
     &:hover {
-        background-color: var(--cpd-color-icon-accent-primary); /* accent đậm hơn */
-        transform: translateY(-1px); /* nhấc nhẹ lên (Hallmark) */
-    }
-
-    &:active {
-        transform: translateY(0); /* nhấn xuống lại khi bấm */
-    }
-
-    &:focus-visible {
-        outline: var(--hg-focus-ring);
-        outline-offset: var(--hg-focus-offset);
+        background-color: var(--cpd-color-icon-accent-primary);
     }
 
     svg {
@@ -264,15 +234,15 @@ Please see LICENSE files in the repository root for full details.
     }
 }
 
-/* Nút dừng câu trả lời AI đang stream (kiểu ChatGPT). */
+/* Nút dừng câu trả lời AI đang stream. */
 .mx_MessageComposer_stopMessage {
     cursor: pointer;
     position: relative;
-    padding: var(--cpd-space-2x);
-    border-radius: 100%;
     background-color: var(--cpd-color-icon-primary);
-    height: 16px;
-    width: 16px;
+
+    &:hover {
+        background-color: var(--cpd-color-icon-secondary);
+    }
 
     svg {
         height: inherit;
@@ -322,9 +292,5 @@ Please see LICENSE files in the repository root for full details.
     }
 }
 
-/* Tinh gọn: tôn trọng giảm chuyển động — tắt hiệu ứng nút gửi */
-@media (prefers-reduced-motion) {
-    .mx_MessageComposer_sendMessage {
-        transition: none;
-    }
-}
+/* Phần tôn trọng prefers-reduced-motion cho nút gửi/dừng nằm ở
+   _hg-polish.pcss §13, chung một chỗ với mọi quy tắc giảm chuyển động khác. */

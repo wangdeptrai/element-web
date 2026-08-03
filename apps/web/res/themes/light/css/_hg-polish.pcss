@@ -1,0 +1,788 @@
+/* Hallmark · genre: modern-minimal · macrostructure: Workbench · theme: Quietwork
+ * design-system: design.md · designed-as-app
+ * pre-emit critique: P5 H4 E5 S5 R5 V5
+ */
+
+/*
+Copyright 2026 thehegeo
+
+SPDX-License-Identifier: AGPL-3.0-only OR GPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+/* ==========================================================================
+   Quietwork — lớp tinh chỉnh thị giác cấp ứng dụng.
+
+   File này được import vào cascade layer `hegeo`, đứng SAU `app-web`, nên
+   thắng mọi rule của Element mà không cần !important và không cần selector
+   chồng nhiều lớp. Nhờ vậy chỉnh sửa ở đây luôn đọc được và luôn gỡ được.
+
+   Toàn bộ giá trị lấy từ res/css/_hg-tokens.pcss. KHÔNG viết màu / bóng /
+   bo góc / thời lượng trực tiếp trong file này.
+
+   Chỉ trình bày. Không đụng logic, event, store, hay tích hợp
+   Synapse / OpenClaw / MCP / Plane.
+
+   Bố cục file:
+     1. Nền tảng — focus, con lăn, chữ số
+     2. Khung app — ba vùng bề mặt + đường chỉ
+     3. Cột trái — danh sách phòng
+     4. Đầu phòng
+     5. Dòng thời gian — nhịp đọc
+     6. Bong bóng tin
+     7. Trải nghiệm đọc AI — markdown, code, bảng
+     8. Khung nhập + chỉ báo đang trả lời
+     9. Panel phải
+    10. Menu, dialog, tooltip, autocomplete
+    11. Trạng thái chờ & rỗng
+    12. Responsive
+    13. Giảm chuyển động
+   ========================================================================== */
+
+/* ==========================================================================
+   1. Nền tảng
+   ========================================================================== */
+
+/* MỘT cách thể hiện focus cho toàn app, hiện TỨC THÌ.
+   Không bao giờ transition outline — nếu animate, người dùng bàn phím sẽ mất
+   chỉ báo trong suốt thời gian chuyển.
+   Không đặt border-radius ở đây: outline đã tự bám theo bo góc sẵn có của
+   phần tử, còn `border-radius: inherit` sẽ ĐỔI HÌNH DẠNG phần tử khi focus. */
+.mx_MatrixChat :focus-visible,
+.mx_Dialog :focus-visible,
+.mx_ContextualMenu :focus-visible {
+    outline: var(--hg-focus-ring);
+    outline-offset: var(--hg-focus-offset);
+    transition: none;
+}
+
+/* Con lăn: mảnh, dịu, bo tròn. Chỉ đổi MÀU khi tương tác — không đổi bề rộng,
+   để nội dung không bị nhảy khi con lăn hiện ra. */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: var(--hg-radius-pill);
+    background-clip: content-box;
+    background-color: color-mix(in srgb, var(--cpd-color-gray-800) 34%, transparent);
+    transition: background-color var(--hg-dur-short) var(--hg-ease-out);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in srgb, var(--cpd-color-gray-800) 72%, transparent);
+}
+
+/* Giữ nguyên hành vi tự-ẩn của Element: trong vùng .mx_AutoHideScrollbar con
+   lăn trong suốt khi nghỉ và chỉ hiện khi rê vào vùng đó. Nếu không dựng lại
+   quy tắc này ở đây, lớp `hegeo` sẽ đè mất và con lăn hiện thường trực. */
+.mx_AutoHideScrollbar::-webkit-scrollbar-thumb {
+    background-color: transparent;
+}
+
+.mx_AutoHideScrollbar:hover::-webkit-scrollbar-thumb {
+    background-color: color-mix(in srgb, var(--cpd-color-gray-800) 40%, transparent);
+}
+
+.mx_AutoHideScrollbar:hover::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in srgb, var(--cpd-color-gray-800) 72%, transparent);
+}
+
+/* Chữ số thẳng cột ở mọi nơi hiển thị con số. Chữ số tỉ lệ trong một cột là
+   một "tell" kinh điển của giao diện chưa được chăm. */
+.mx_MessageTimestamp,
+.mx_NotificationBadge,
+.mx_NotificationBadge_count,
+.mx_RoomListPanel [class*="notificationDecoration"],
+.mx_RoomListPanel [class*="timestamp"] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+}
+
+/* ==========================================================================
+   2. Khung app — ba vùng bề mặt, một đường chỉ
+   ========================================================================== */
+
+.mx_MatrixChat {
+    background-color: var(--hg-surface-canvas);
+}
+
+/* Đường ngăn giữa các vùng: một sợi chỉ duy nhất, không đổ bóng, không viền dày.
+   Chiều sâu ở chrome sẽ cạnh tranh với nội dung. */
+.mx_RightPanel {
+    border-left: 1px solid var(--hg-seam);
+    background-color: var(--hg-surface-raised);
+    box-shadow: var(--hg-elev-0);
+}
+
+/* Tay nắm kéo giãn: chỉ hiện khi rê vào hoặc focus, không phải một vạch
+   thường trực chia đôi màn hình. */
+.mx_ResizeHandle--horizontal::before {
+    transition: opacity var(--hg-dur-short) var(--hg-ease-out);
+}
+
+/* ==========================================================================
+   3. Cột trái — danh sách phòng
+   ========================================================================== */
+
+.mx_RoomListPanel {
+    background-color: var(--hg-surface-rail);
+    border-right: 1px solid var(--hg-seam);
+
+    /* Hàng phòng do CSS Modules dựng (tên class có băm), nên chỉ chỉnh được
+       qua token — vốn cũng là cách đúng của một hệ thiết kế dựa trên token,
+       và không vỡ khi package shared-components được build lại.
+       nghỉ → rê → chọn: ba bậc rõ ràng, không bậc nào ồn. */
+    --cpd-color-bg-action-tertiary-hovered: var(--cpd-color-gray-300);
+    --cpd-color-bg-action-tertiary-selected: var(--cpd-color-gray-400);
+}
+
+/* Hàng trên cùng (avatar + ô tìm kiếm) cao đúng bằng đầu phòng bên cạnh, để
+   hai cột cắt nhau trên MỘT đường ngang. Sự thẳng hàng đó là thứ mắt đọc ra
+   là "được thiết kế" trước cả khi kịp nghĩ. */
+.mx_RoomListPanel_header {
+    border-bottom: 1px solid var(--hg-seam);
+    padding-left: var(--hg-rail-inset);
+    gap: var(--cpd-space-1x);
+}
+
+/* Ô tìm kiếm: một trường thật sự, không phải một nút trần nằm trong hàng.
+   Bo góc + nền lõm cho thấy "gõ được vào đây". */
+.mx_RoomListPanel_header [data-testid="room-list-search"] {
+    padding: 0;
+}
+
+.mx_RoomListPanel_header [data-testid="room-list-search"] button {
+    border-radius: var(--hg-radius-sm);
+    padding: var(--cpd-space-1-5x) var(--cpd-space-2x);
+    background-color: transparent;
+    transition:
+        background-color var(--hg-dur-short) var(--hg-ease-out),
+        color var(--hg-dur-short) var(--hg-ease-out);
+}
+
+.mx_RoomListPanel_header [data-testid="room-list-search"] button:hover {
+    background-color: var(--cpd-color-bg-action-tertiary-hovered);
+    color: var(--cpd-color-text-primary);
+}
+
+/* Bộ lọc: hàng chip trên cùng của danh sách, thở ra khỏi mép cột. */
+.mx_RoomListPanel [data-testid="primary-filters"] {
+    padding-inline: var(--hg-rail-inset);
+}
+
+/* ==========================================================================
+   4. Đầu phòng
+   ========================================================================== */
+
+.mx_RoomHeader {
+    background-color: var(--hg-surface-canvas);
+    border-bottom: 1px solid var(--hg-seam);
+    /* Bỏ hẳn hiệu ứng đổi nền khi rê chuột: đầu phòng là một mốc cố định,
+       không phải một nút. Nhấp nháy khi lướt qua là nhiễu thuần túy. */
+    transition: none;
+}
+
+.mx_RoomHeader:hover {
+    background-color: var(--hg-surface-canvas);
+}
+
+/* Tên phòng: Inter 600 siết tracking. Sức nặng và tracking làm việc của
+   "font hiển thị" — không cần một họ chữ thứ ba. */
+.mx_RoomHeader_heading {
+    font-family: var(--hg-font-display);
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: var(--hg-tracking-display);
+    line-height: 1.3;
+}
+
+/* ==========================================================================
+   5. Dòng thời gian — nhịp đọc
+   ========================================================================== */
+
+/* Bề mặt đọc: phẳng và sạch. Đã bỏ lớp grain + ánh accent trước đây —
+   công thức đó dành cho một khối hero tĩnh, không dành cho một vùng cuộn
+   hàng nghìn tin (background-attachment: fixed vẽ lại mỗi khung hình) và nó
+   nằm ngay dưới đúng phần chữ cần đọc nhất. */
+.mx_RoomView_messagePanel {
+    background-color: var(--hg-surface-canvas);
+    background-image: none;
+}
+
+/* Chỉnh qua BIẾN chứ không đặt thẳng padding: mx_ProfileResizer, layout IRC và
+   mx_UserIdentityWarning đều tính lề âm dựa trên chính biến này, nên ghi đè
+   padding trực tiếp sẽ làm lệch avatar và cảnh báo danh tính. */
+.mx_RoomView {
+    --RoomView_MessageList-padding: var(--hg-gutter);
+}
+
+/* Nhịp cụm: 6× giữa hai người nói, 1× trong một lượt nói.
+   Khoảng cách bằng nhau đọc như file log; khoảng cách phân cụm đọc như
+   một cuộc hội thoại. */
+.mx_EventTile {
+    padding-top: var(--hg-cluster-gap);
+}
+
+.mx_EventTile.mx_EventTile_continuation {
+    padding-top: var(--hg-message-gap);
+}
+
+/* Tên người gửi dẫn mắt; dấu thời gian lùi lại. */
+.mx_DisambiguatedProfile {
+    letter-spacing: -0.006em;
+}
+
+.mx_MessageTimestamp {
+    color: var(--cpd-color-text-secondary);
+}
+
+/* Vạch ngày: một sợi chỉ với nhãn ở giữa, không phải hai thanh đậm.
+   Nhắm theo vai trò ARIA nên không phụ thuộc tên class bị băm. */
+.mx_RoomView_MessageList [role="separator"] > hr {
+    border-bottom-color: var(--hg-seam);
+}
+
+.mx_RoomView_MessageList [role="separator"] {
+    margin-block: var(--cpd-space-4x);
+    font: var(--cpd-font-body-sm-medium);
+    color: var(--cpd-color-text-secondary);
+}
+
+/* ==========================================================================
+   6. Bong bóng tin
+   ========================================================================== */
+
+/* Timeline tràn viền là quyết định sản phẩm, nên chốt bề rộng ĐỌC ở bong bóng.
+   Không có nắp này, một câu trả lời AI dài sẽ trải thành dòng chữ 2000px trên
+   màn hình rộng — không ai đọc nổi.
+   Núm điều chỉnh đúng là --EventBubbleTile_line-max-width (được max-width tiêu
+   thụ ở _EventBubbleTile.pcss). Biến --maxWidth trong file đó được khai báo
+   nhưng KHÔNG chỗ nào dùng, nên chỉnh nó sẽ không có tác dụng gì. */
+.mx_EventTile[data-layout="bubble"],
+.mx_GenericEventListSummary[data-layout="bubble"] {
+    --cornerRadius: var(--hg-radius-lg);
+}
+
+.mx_EventTile[data-layout="bubble"] .mx_DisambiguatedProfile,
+.mx_EventTile[data-layout="bubble"] .mx_EventTile_line {
+    --EventBubbleTile_line-max-width: min(70%, var(--hg-measure));
+}
+
+/* Media, code và bảng được rộng hơn chữ chạy. */
+.mx_EventTile[data-layout="bubble"] .mx_EventTile_mediaLine,
+.mx_EventTile[data-layout="bubble"] .mx_EventTile_line:has(pre),
+.mx_EventTile[data-layout="bubble"] .mx_EventTile_line:has(table) {
+    --EventBubbleTile_line-max-width: min(88%, var(--hg-measure-wide));
+}
+
+/* Bong bóng nghỉ yên. Đã bỏ hiệu ứng nhấc + đổ bóng sâu khi rê chuột:
+   trên một danh sách dài, "mỗi thẻ nhấc lên khi hover" chính là dấu hiệu
+   giao diện sinh tự động, và nó bắt trình duyệt vẽ lại theo từng cử động
+   chuột. Thanh hành động vốn đã hiện khi rê — thế là đủ. */
+.mx_EventTile[data-layout="bubble"] .mx_EventTile_line {
+    box-shadow: var(--hg-elev-0);
+    border: 1px solid transparent;
+    transition: border-color var(--hg-dur-short) var(--hg-ease-out);
+    transform: none;
+}
+
+.mx_EventTile[data-layout="bubble"]:hover .mx_EventTile_line {
+    box-shadow: var(--hg-elev-0);
+    transform: none;
+}
+
+/* Bong bóng của người khác (kể cả AI): một sợi viền mảnh thay cho đổ bóng.
+   Viền giữ được hình khối trên cả nền sáng lẫn nền tối; đổ bóng thì không. */
+.mx_EventTile[data-layout="bubble"][data-self="false"] .mx_EventTile_line:not(.mx_EventTile_mediaLine) {
+    border-color: var(--hg-seam);
+}
+
+/* Đoạn văn dài cần line-height rộng hơn chữ giao diện. */
+.mx_EventTile_body {
+    line-height: 1.55;
+}
+
+/* ==========================================================================
+   7. Trải nghiệm đọc AI — markdown, code, bảng
+   Đây là nội dung chính của app, nên nó được luật chặt hơn phần còn lại.
+   ========================================================================== */
+
+/* Khối code: bề mặt lõm, mono, cuộn ngang (không bao giờ xuống dòng).
+   Không vẽ thanh tiêu đề giả với ba chấm đèn giao thông — trình duyệt và IDE
+   của người dùng đã là chrome thật rồi. */
+.mx_EventTile_body pre,
+.mx_EventTile_content pre,
+.mx_Dialog .markdown-body pre {
+    background-color: var(--hg-surface-sunken);
+    border: 1px solid var(--hg-seam);
+    border-radius: var(--hg-radius-sm);
+    padding: var(--cpd-space-3x);
+    margin-block: var(--cpd-space-2x);
+    max-width: var(--hg-measure-wide);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+}
+
+.mx_EventTile_body pre code,
+.mx_EventTile_content pre code {
+    font-family: var(--hg-font-mono);
+    font-size: var(--cpd-font-size-body-sm);
+    line-height: 1.6;
+    background: none;
+    padding: 0;
+}
+
+/* Code trong dòng: một viên chip, không phải một mảng nền loang. */
+.mx_EventTile_body code:not(pre code),
+.mx_EventTile_content code:not(pre code) {
+    font-family: var(--hg-font-mono);
+    font-size: 0.9em;
+    padding: 0.1em 0.35em;
+    border-radius: var(--hg-radius-xs);
+    background-color: var(--hg-surface-well);
+    border: 1px solid var(--hg-seam);
+}
+
+/* Bảng: chỉ có đường chỉ, không kẻ sọc ngựa vằn. Chữ số thẳng cột.
+   Bảng tự cuộn trong khung của nó nên trang không bao giờ trôi ngang. */
+.mx_EventTile_body table,
+.mx_EventTile_content table {
+    display: block;
+    max-width: var(--hg-measure-wide);
+    overflow-x: auto;
+    border-collapse: collapse;
+    margin-block: var(--cpd-space-2x);
+    font-variant-numeric: tabular-nums;
+}
+
+.mx_EventTile_body table th,
+.mx_EventTile_content table th {
+    text-align: start;
+    font: var(--cpd-font-body-sm-semibold);
+    color: var(--cpd-color-text-primary);
+    border-bottom: 1px solid var(--hg-seam-strong);
+}
+
+.mx_EventTile_body table td,
+.mx_EventTile_content table td,
+.mx_EventTile_body table th,
+.mx_EventTile_content table th {
+    padding: var(--cpd-space-1-5x) var(--cpd-space-3x);
+    border-bottom: 1px solid var(--hg-seam);
+}
+
+.mx_EventTile_body table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Trích dẫn: một sợi accent mảnh, không phải một thanh dày.
+   (Thanh dày lệch một bên là "side-stripe card" — dấu hiệu SaaS 2018.) */
+.mx_EventTile_body blockquote,
+.mx_EventTile_content blockquote {
+    border-left: 2px solid var(--hg-seam-strong);
+    color: var(--cpd-color-text-secondary);
+    padding-inline-start: var(--cpd-space-3x);
+    margin-inline-start: 0;
+    margin-block: var(--cpd-space-2x);
+}
+
+/* Danh sách trong câu trả lời AI: thụt vào vừa đủ để thấy cấu trúc, không
+   quá xa để mất mạch đọc. */
+.mx_EventTile_body ul,
+.mx_EventTile_body ol,
+.mx_EventTile_content ul,
+.mx_EventTile_content ol {
+    padding-inline-start: var(--cpd-space-5x);
+    margin-block: var(--cpd-space-1x);
+}
+
+.mx_EventTile_body li + li,
+.mx_EventTile_content li + li {
+    margin-top: var(--cpd-space-1x);
+}
+
+/* Tiêu đề trong markdown: phân cấp bằng SỨC NẶNG, không bằng cỡ chữ nhảy vọt.
+   Trong một bong bóng chat, h1 to bằng nửa màn hình là sai ngữ cảnh. */
+.mx_EventTile_body h1,
+.mx_EventTile_body h2,
+.mx_EventTile_body h3,
+.mx_EventTile_content h1,
+.mx_EventTile_content h2,
+.mx_EventTile_content h3 {
+    font-family: var(--hg-font-display);
+    font-weight: 600;
+    letter-spacing: var(--hg-tracking-display);
+    line-height: 1.35;
+    margin-block: var(--cpd-space-3x) var(--cpd-space-1x);
+}
+
+.mx_EventTile_body h1,
+.mx_EventTile_content h1 {
+    font-size: 1.25rem;
+}
+
+.mx_EventTile_body h2,
+.mx_EventTile_content h2 {
+    font-size: 1.125rem;
+}
+
+.mx_EventTile_body h3,
+.mx_EventTile_content h3 {
+    font-size: 1rem;
+}
+
+/* Liên kết: gạch chân có khoảng hở, không chỉ đổi màu. Chỉ dựa vào màu là
+   một lỗi tiếp cận với người khó phân biệt màu. */
+.mx_EventTile_body a,
+.mx_EventTile_content a {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-thickness: 1px;
+    text-decoration-color: color-mix(in srgb, currentcolor 40%, transparent);
+    transition: text-decoration-color var(--hg-dur-micro) var(--hg-ease-out);
+}
+
+.mx_EventTile_body a:hover,
+.mx_EventTile_content a:hover {
+    text-decoration-color: currentcolor;
+}
+
+/* Đường kẻ ngang trong markdown. */
+.mx_EventTile_body hr,
+.mx_EventTile_content hr {
+    border: none;
+    border-top: 1px solid var(--hg-seam);
+    margin-block: var(--cpd-space-4x);
+}
+
+/* ==========================================================================
+   8. Khung nhập + chỉ báo đang trả lời
+   ========================================================================== */
+
+.mx_MessageComposer_wrapper {
+    background-color: var(--hg-surface-raised);
+    border: 1px solid var(--hg-seam-strong);
+    border-radius: var(--hg-radius-xl);
+    box-shadow: var(--hg-elev-1);
+    transition:
+        border-color var(--hg-dur-short) var(--hg-ease-out),
+        box-shadow var(--hg-dur-short) var(--hg-ease-out);
+}
+
+.mx_MessageComposer_wrapper:hover {
+    border-color: var(--cpd-color-border-interactive-hovered);
+}
+
+/* Focus: viền đậm lên + một quầng accent MẢNH. Quầng dừng ở 3px — đủ để
+   thấy "đang gõ ở đây", chưa tới mức phát sáng. */
+.mx_MessageComposer_wrapper:focus-within {
+    border-color: var(--cpd-color-border-interactive-primary);
+    box-shadow:
+        0 0 0 3px color-mix(in srgb, var(--cpd-color-bg-accent-rest) 14%, transparent),
+        var(--hg-elev-1);
+}
+
+/* Chỗ giữ chỗ dùng màu chữ phụ. Trước đây nó ăn màu accent, khiến ô nhập
+   trông như đang có nội dung quan trọng trong khi đang rỗng. */
+.mx_MessageComposer_input textarea::placeholder,
+.mx_MessageComposer_input textarea::-webkit-input-placeholder {
+    color: var(--cpd-color-text-secondary);
+    opacity: 1;
+}
+
+/* Nút phụ trong khung nhập: vùng bấm nới lên 28px cho cả chuột lẫn cảm ứng
+   (trước là 20px — dưới ngưỡng dùng được), nhưng ICON vẫn giữ 20px.
+   Phải ghim cỡ svg vì trong Element svg dùng `width: inherit` — nới nút mà
+   không ghim icon thì icon phình theo. Loại trừ _buttonMenu vì nút đó có kích
+   thước riêng 24px. */
+.mx_MessageComposer_button:not(.mx_MessageComposer_buttonMenu) {
+    box-sizing: border-box;
+    width: 28px;
+    height: 28px;
+    padding: 4px;
+    border-radius: var(--hg-radius-sm);
+    transition:
+        background-color var(--hg-dur-micro) var(--hg-ease-out),
+        color var(--hg-dur-micro) var(--hg-ease-out);
+}
+
+.mx_MessageComposer_button:not(.mx_MessageComposer_buttonMenu) svg {
+    width: 20px;
+    height: 20px;
+}
+
+.mx_MessageComposer_button:hover {
+    background-color: var(--cpd-color-bg-action-tertiary-hovered);
+}
+
+.mx_MessageComposer_button:focus-visible {
+    outline: var(--hg-focus-ring);
+    outline-offset: var(--hg-focus-offset);
+}
+
+/* Nút gửi và nút dừng chiếm cùng một ô, nên phải cùng kích thước — nếu lệch,
+   khung nhập sẽ giật mỗi khi bot bắt đầu hoặc kết thúc trả lời. */
+.mx_MessageComposer_sendMessage,
+.mx_MessageComposer_stopMessage {
+    height: 16px;
+    width: 16px;
+    padding: var(--cpd-space-2x);
+    border-radius: var(--hg-radius-pill);
+    transition:
+        background-color var(--hg-dur-micro) var(--hg-ease-out),
+        transform var(--hg-dur-micro) var(--hg-ease-out);
+}
+
+.mx_MessageComposer_sendMessage:hover,
+.mx_MessageComposer_stopMessage:hover {
+    transform: translateY(-1px);
+}
+
+.mx_MessageComposer_sendMessage:active,
+.mx_MessageComposer_stopMessage:active {
+    transform: translateY(0);
+}
+
+.mx_MessageComposer_sendMessage:focus-visible,
+.mx_MessageComposer_stopMessage:focus-visible {
+    outline: var(--hg-focus-ring);
+    outline-offset: var(--hg-focus-offset);
+    /* focus không được animate */
+    transition: background-color var(--hg-dur-micro) var(--hg-ease-out);
+}
+
+/* ---- Chỉ báo "agent đang trả lời" --------------------------------------
+   MỘT chỉ báo, không phải ba: một sợi accent chạy ngang mép trên khung nhập.
+   Điều kiện hiển thị hoàn toàn dựa vào việc nút Stop có mặt trong DOM hay
+   không (`:has()`), nên không cần thêm state, thêm class, hay sửa component —
+   không có rủi ro nào với luồng stream của OpenClaw. */
+.mx_MessageComposer_wrapper:has(.mx_MessageComposer_stopMessage) {
+    border-color: color-mix(in srgb, var(--cpd-color-bg-accent-rest) 45%, var(--hg-seam-strong));
+}
+
+.mx_MessageComposer_wrapper:has(.mx_MessageComposer_stopMessage)::after {
+    content: "";
+    position: absolute;
+    inset-inline: var(--cpd-space-6x);
+    top: -1px;
+    height: 2px;
+    border-radius: var(--hg-radius-pill);
+    pointer-events: none;
+    background-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        var(--cpd-color-bg-accent-rest) 50%,
+        transparent 100%
+    );
+    background-size: 45% 100%;
+    background-repeat: no-repeat;
+    animation: hg-stream-sweep 1.8s var(--hg-ease-in-out) infinite;
+}
+
+/* Chuyển động chức năng (như thanh tiến trình): được phép chạy vòng lặp. */
+@keyframes hg-stream-sweep {
+    from {
+        background-position: -45% 0;
+    }
+
+    to {
+        background-position: 145% 0;
+    }
+}
+
+/* Autocomplete (lệnh gạch chéo, @mention): một lớp tạm → độ nổi bậc 2. */
+.mx_Autocomplete {
+    border-radius: var(--hg-radius-md);
+    border: 1px solid var(--hg-seam);
+    background-color: var(--hg-surface-raised);
+    box-shadow: var(--hg-elev-2);
+    overflow: hidden;
+}
+
+.mx_Autocomplete_Completion_container_pill,
+.mx_Autocomplete_Completion_container_truncate {
+    border-radius: var(--hg-radius-sm);
+}
+
+/* ==========================================================================
+   9. Panel phải
+   ========================================================================== */
+
+.mx_BaseCard_header {
+    border-bottom: 1px solid var(--hg-seam);
+    min-height: 64px; /* thẳng hàng với đầu phòng và hàng tìm kiếm */
+    box-sizing: border-box;
+}
+
+.mx_BaseCard_header > h2,
+.mx_BaseCard_header_title > h2 {
+    font-family: var(--hg-font-display);
+    font-weight: 600;
+    letter-spacing: var(--hg-tracking-display);
+}
+
+/* Khung KPI/Plane nhúng: bo góc và viền theo hệ thống thay vì dán sát mép. */
+.mx_PlaneCard iframe {
+    border-radius: var(--hg-radius-md);
+}
+
+/* ==========================================================================
+   10. Menu, dialog, tooltip
+   ========================================================================== */
+
+.mx_ContextualMenu {
+    border-radius: var(--hg-radius-md);
+    border: 1px solid var(--hg-seam);
+    background-color: var(--hg-surface-raised);
+    box-shadow: var(--hg-elev-2);
+    overflow: hidden;
+}
+
+/* Chevron của menu phải đổi màu theo bề mặt mới, nếu không nó sẽ "rời" khỏi
+   hộp menu ở theme tối. */
+.mx_ContextualMenu_chevron_right {
+    border-left-color: var(--hg-surface-raised);
+}
+
+.mx_ContextualMenu_chevron_left {
+    border-right-color: var(--hg-surface-raised);
+}
+
+.mx_ContextualMenu_chevron_top {
+    border-bottom-color: var(--hg-surface-raised);
+}
+
+.mx_ContextualMenu_chevron_bottom {
+    border-top-color: var(--hg-surface-raised);
+}
+
+.mx_Dialog {
+    background-color: var(--hg-surface-raised);
+    border-radius: var(--hg-radius-lg);
+}
+
+.mx_Dialog_border {
+    border-radius: var(--hg-radius-lg);
+    box-shadow: var(--hg-elev-3);
+}
+
+/* Dialog vào màn: scale nhẹ + mờ dần. MỘT chuyển động có tổ chức cho một
+   thay đổi ngữ cảnh thật sự — khác hẳn với việc mọi thứ đều fade-in. */
+.mx_Dialog_wrapper:not(.mx_Dialog_lightbox) .mx_Dialog_border {
+    animation: hg-dialog-in var(--hg-dur-long) var(--hg-ease-out) both;
+}
+
+@keyframes hg-dialog-in {
+    from {
+        opacity: 0;
+        transform: scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* Nền mờ phía sau dialog. Loại trừ lightbox: nó không phải dialog mà là khung
+   xem ảnh toàn màn, làm mờ nền ở đó sẽ làm hỏng chính thứ đang xem. */
+.mx_Dialog_wrapper:not(.mx_Dialog_lightbox) .mx_Dialog_background {
+    backdrop-filter: blur(2px);
+}
+
+/* Tooltip: rê chuột chờ lâu (chủ ý mơ hồ), focus hiện ngay (chủ ý rõ ràng).
+   Hai ý định khác nhau thì phải hai nhịp khác nhau. */
+[role="tooltip"] {
+    border-radius: var(--hg-radius-sm);
+    box-shadow: var(--hg-elev-2);
+}
+
+/* ==========================================================================
+   11. Trạng thái chờ & rỗng
+   ========================================================================== */
+
+/* Trạng thái rỗng: canh giữa, thoáng, chữ phụ — một khoảng lặng có chủ ý,
+   không phải một vùng trống vì quên thiết kế. */
+.mx_EmptyState {
+    padding: var(--cpd-space-10x) var(--cpd-space-6x);
+    max-width: 44ch;
+    margin-inline: auto;
+    text-align: center;
+    color: var(--cpd-color-text-secondary);
+    font: var(--cpd-font-body-md-regular);
+}
+
+/* Spinner giữ nguyên hình dạng của Element, chỉ dịu lại để không kéo mắt
+   trong lúc chờ. */
+.mx_Spinner {
+    opacity: 0.85;
+}
+
+/* ==========================================================================
+   12. Responsive
+   Cột hẹp: giảm lề, không giảm khả năng đọc.
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+    .mx_RoomView_MessageList {
+        padding-inline: var(--cpd-space-3x);
+    }
+
+    .mx_EventTile[data-layout="bubble"],
+    .mx_GenericEventListSummary[data-layout="bubble"] {
+        --maxWidth: min(84%, var(--hg-measure));
+    }
+}
+
+@media (max-width: 768px) {
+    .mx_EventTile[data-layout="bubble"],
+    .mx_GenericEventListSummary[data-layout="bubble"] {
+        --maxWidth: 92%;
+    }
+
+    .mx_MessageComposer_wrapper {
+        margin-inline: var(--cpd-space-2x);
+        border-radius: var(--hg-radius-lg);
+    }
+
+    .mx_Dialog {
+        padding: var(--cpd-space-6x) var(--cpd-space-4x);
+    }
+}
+
+/* ==========================================================================
+   13. Giảm chuyển động
+   Chuyển động không gian sập về mờ dần. Chuyển động CHỨC NĂNG (spinner, chỉ
+   báo đang trả lời) vẫn chạy — người dùng cần biết hệ thống còn sống.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    .mx_Dialog_wrapper:not(.mx_Dialog_lightbox) .mx_Dialog_border {
+        animation: hg-dialog-in-reduced 150ms linear both;
+    }
+
+    @keyframes hg-dialog-in-reduced {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    .mx_MessageComposer_sendMessage,
+    .mx_MessageComposer_stopMessage,
+    .mx_MessageComposer_sendMessage:hover,
+    .mx_MessageComposer_stopMessage:hover {
+        transform: none;
+        transition: background-color var(--hg-dur-micro) var(--hg-ease-out);
+    }
+
+    .mx_MessageComposer_wrapper:has(.mx_MessageComposer_stopMessage)::after {
+        animation-duration: 3s;
+    }
+}

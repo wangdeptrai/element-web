@@ -54,6 +54,8 @@ module.exports = {
             {
                 importFrom: [
                     { from: "res/css/_common.pcss", type: "css" },
+                    // Quietwork design tokens (--hg-*), see design.md at the repo root
+                    { from: "res/css/_hg-tokens.pcss", type: "css" },
                     { from: "res/themes/light/css/_light.pcss", type: "css" },
                     // Right now our styles share vars all over the place, this is not ideal but acceptable for now
                     { from: "res/css/views/rooms/_EventTile.pcss", type: "css" },

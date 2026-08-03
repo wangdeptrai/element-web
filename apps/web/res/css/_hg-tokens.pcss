@@ -1,0 +1,146 @@
+/*
+Copyright 2026 thehegeo
+
+SPDX-License-Identifier: AGPL-3.0-only OR GPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+/* ==========================================================================
+   Quietwork — lớp token trình bày của thehegeo.
+   Xem `design.md` ở gốc repo để biết lý do của từng quyết định.
+
+   Nguyên tắc:
+   · Compound (--cpd-*) sở hữu bảng màu. Quietwork chỉ PHÂN VAI cho chúng.
+   · File này là NƠI DUY NHẤT được viết giá trị thô (màu, bóng, bo góc, thời
+     lượng, easing). Mọi file component khác chỉ được dùng var(--hg-*).
+   · Đặt trong res/css/ (không phải res/themes/) để _components.pcss gom vào
+     -> CẢ 8 theme đều có token, kể cả legacy/custom vốn không import _mods.
+   · Chỉ ảnh hưởng trình bày. Không đụng logic, event, store, tích hợp.
+   ========================================================================== */
+
+:root {
+    /* ---- Chữ ------------------------------------------------------------
+       Một sans + một mono. Sans cho những gì con người viết, mono cho những
+       gì máy viết — đó chính là ý đồ typography của một workspace AI.
+       (--hg-font-display trước đây trỏ tới Nunito; đã rút gọn về Inter để
+       chrome đọc như công cụ làm việc, không phải app tiêu dùng. Tên token
+       giữ nguyên nên các file đang dùng không cần sửa.) */
+    --hg-font-display: var(--cpd-font-family-sans);
+    --hg-font-mono:
+        "Fira Code", var(--emoji-font-family), "Apple Color Emoji", "Segoe UI Emoji", "Courier", monospace,
+        "Noto Color Emoji";
+
+    /* Tracking siết lại ở cỡ hiển thị — Inter 600 ở -0.015em đọc chắc và gọn.
+       Ở cỡ thân chữ thì KHÔNG siết (Compound đã lo bằng dynamic metrics). */
+    --hg-tracking-display: -0.015em;
+
+    /* ---- Bậc bề mặt (light) ---------------------------------------------
+       Ba bề mặt, một đường chỉ, không trang trí.
+       Sáng: canvas là thứ SÁNG NHẤT, chrome lùi xuống một bậc. */
+    --hg-surface-rail: var(--cpd-color-gray-200);
+    --hg-surface-canvas: var(--cpd-color-theme-bg);
+    --hg-surface-raised: var(--cpd-color-theme-bg);
+    --hg-surface-sunken: var(--cpd-color-gray-200);
+    --hg-surface-well: var(--cpd-color-gray-300);
+
+    /* Đường chỉ duy nhất trong toàn app. Đặc (không alpha) để không đổi màu
+       khi nằm trên các bề mặt khác nhau. */
+    --hg-seam: color-mix(in srgb, var(--cpd-color-gray-400) 72%, var(--cpd-color-gray-200));
+    --hg-seam-strong: var(--cpd-color-gray-400);
+
+    /* Mực đổ bóng: ngả xám-xanh của Compound, không phải đen tuyền. */
+    --hg-shadow-ink: 27 29 34; /* = gray-1400 #1b1d22 */
+
+    /* ---- Độ nổi ---------------------------------------------------------
+       0 phẳng · 1 thẻ nghỉ · 2 lớp tạm (menu) · 3 modal. */
+    --hg-elev-0: none;
+    --hg-elev-1:
+        0 1px 2px rgb(var(--hg-shadow-ink) / 0.05),
+        0 8px 20px -12px rgb(var(--hg-shadow-ink) / 0.14);
+    --hg-elev-2:
+        0 2px 4px rgb(var(--hg-shadow-ink) / 0.06),
+        0 16px 32px -12px rgb(var(--hg-shadow-ink) / 0.18);
+    --hg-elev-3:
+        0 4px 8px rgb(var(--hg-shadow-ink) / 0.08),
+        0 32px 64px -16px rgb(var(--hg-shadow-ink) / 0.24);
+
+    /* ---- Bo góc ---------------------------------------------------------
+       Thang siết: điều khiển sắc nét hơn khung chứa. */
+    --hg-radius-xs: 6px; /* chip, badge, code inline      */
+    --hg-radius-sm: 8px; /* nút, hàng danh sách, code block */
+    --hg-radius-md: 12px; /* menu, thẻ, panel             */
+    --hg-radius-lg: 16px; /* dialog, bong bóng tin        */
+    --hg-radius-xl: 22px; /* thẻ khung nhập               */
+    --hg-radius-pill: 999px;
+
+    /* ---- Nhịp bố cục ----------------------------------------------------
+       Thang 4pt của Compound là thang DUY NHẤT; đây chỉ là tên ngữ nghĩa để
+       chỉnh nhịp ở một chỗ. */
+    --hg-gutter: 20px; /* lề ngang cột hội thoại              */
+    --hg-rail-inset: 12px; /* lề ngang trong cột trái         */
+    --hg-cluster-gap: 24px; /* giữa hai cụm khác người gửi    */
+    --hg-message-gap: 4px; /* giữa hai tin liên tiếp cùng người */
+
+    /* ---- Bề rộng đọc ----------------------------------------------------
+       Timeline tràn viền là quyết định sản phẩm, nên chốt bề rộng ĐỌC ở
+       bong bóng chứ không ở khung chứa. Câu trả lời AI dài là nội dung
+       chính của app này; 68ch là ngưỡng dễ đọc. */
+    --hg-measure: 68ch;
+    --hg-measure-wide: 92ch; /* code, bảng, media được rộng hơn */
+
+    /* ---- Chuyển động ----------------------------------------------------
+       Ba easing, ba thời lượng, và thiên hướng mạnh về "không có". */
+    --hg-ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* đi vào    */
+    --hg-ease-in: cubic-bezier(0.7, 0, 0.84, 0); /* đi ra      */
+    --hg-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1); /* đảo trạng thái */
+
+    /* Ba mức thời lượng; lối ra chạy khoảng 75% lối vào. */
+    --hg-dur-micro: 120ms; /* nhấn, đổi màu          */
+    --hg-dur-short: 200ms; /* hover, tooltip, menu   */
+    --hg-dur-long: 360ms; /* dialog, drawer          */
+
+    /* Giữ tương thích với các file đã viết trước đó. */
+    --hg-dur-1: var(--hg-dur-micro);
+    --hg-dur-2: var(--hg-dur-short);
+
+    /* ---- Focus ----------------------------------------------------------
+       MỘT cách thể hiện duy nhất, hiện TỨC THÌ, không bao giờ animate.
+       Focus dùng màu xanh dương của Compound — không dùng accent, để phân
+       biệt được "đang focus" với "đang chọn". */
+    --hg-focus-ring: 2px solid var(--cpd-color-border-focused);
+    --hg-focus-offset: 2px;
+}
+
+/* ---- Bậc bề mặt (dark) --------------------------------------------------
+   Tối: canvas là thứ TỐI NHẤT, chrome nhô lên một bậc — nội dung nổi khỏi bề
+   mặt sâu nhất. Cùng một ý với theme sáng, đảo chiều.
+   Đổ bóng ở theme tối: sát và gần-đen, KHÔNG quầng sáng. Độ nổi thể hiện
+   bằng ĐỘ SÁNG (viền highlight 1px phía trên), đúng nguyên tắc dark UI. */
+.cpd-theme-dark {
+    --hg-surface-rail: var(--cpd-color-gray-100);
+    --hg-surface-canvas: var(--cpd-color-theme-bg);
+    --hg-surface-raised: var(--cpd-color-gray-200);
+    --hg-surface-sunken: var(--cpd-color-gray-200);
+    --hg-surface-well: var(--cpd-color-gray-300);
+
+    /* Đường chỉ ở theme tối phải sáng hơn nền một chút mới thấy được. */
+    --hg-seam: color-mix(in srgb, var(--cpd-color-gray-400) 80%, var(--cpd-color-gray-100));
+    --hg-seam-strong: var(--cpd-color-gray-500);
+
+    /* Trên nền tối, bóng gần như đen tuyền — mọi sắc màu trong bóng sẽ thành quầng sáng. */
+    --hg-shadow-ink: 0 0 0;
+
+    /* Độ nổi = ĐỘ SÁNG (viền highlight 1px phía trên) + bóng sát, không phải quầng. */
+    --hg-elev-1:
+        inset 0 1px 0 rgb(255 255 255 / 0.04),
+        0 1px 2px rgb(var(--hg-shadow-ink) / 0.4),
+        0 8px 20px -12px rgb(var(--hg-shadow-ink) / 0.55);
+    --hg-elev-2:
+        inset 0 1px 0 rgb(255 255 255 / 0.05),
+        0 2px 4px rgb(var(--hg-shadow-ink) / 0.45),
+        0 16px 32px -12px rgb(var(--hg-shadow-ink) / 0.6);
+    --hg-elev-3:
+        inset 0 1px 0 rgb(255 255 255 / 0.06),
+        0 4px 8px rgb(var(--hg-shadow-ink) / 0.5),
+        0 32px 64px -16px rgb(var(--hg-shadow-ink) / 0.7);
+}

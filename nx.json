@@ -3,16 +3,16 @@
     "defaultBase": "develop",
     "targetDefaults": {
         "build": {
-            "dependsOn": ["^build", "prebuild:*"]
+            "dependsOn": [
+                "^build",
+                "prebuild:*"
+            ]
         }
     },
     "namedInputs": {
-        "src": ["{projectRoot}/src/**/*"]
-    },
-    "pluginsConfig": {
-        "@nx/js": {
-            "analyzeLockfile": false
-        }
+        "src": [
+            "{projectRoot}/src/**/*"
+        ]
     },
     "analytics": false
 }

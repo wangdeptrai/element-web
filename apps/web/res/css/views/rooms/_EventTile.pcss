@@ -20,8 +20,8 @@ $left-gutter: 64px;
     flex-shrink: 0;
     max-width: 100%;
     clear: both; /* TODO: check if this is necessary */
-    /* Khoảng thở giữa các cụm tin khác người gửi (tin liên tiếp cùng người vẫn sát nhau,
-       nhờ .mx_EventTile_continuation { padding-top: 0 }). Trước là 18px. */
+    /* Nhịp phân cụm (giữa hai người nói / trong một lượt nói) do Quietwork đặt
+       bằng --hg-cluster-gap và --hg-message-gap: xem _hg-polish.pcss §5. */
     padding-top: var(--cpd-space-6x);
     position: relative;
 

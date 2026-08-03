@@ -10,19 +10,14 @@ Please see LICENSE files in the repository root for full details.
     height: 64px;
     box-sizing: border-box;
     padding: 0 var(--cpd-space-3x) 0 calc(var(--cpd-space-3x) + var(--cpd-space-1-5x));
-    border-bottom: 1px solid $separator;
-    background-color: $background;
-    /* Chỉ animate màu nền (bỏ transition: all cho gọn/mượt) */
-    transition: background-color var(--hg-dur-1) ease;
+    /* Bề mặt, đường chỉ dưới và (không) hiệu ứng hover do Quietwork đặt
+       (_hg-polish.pcss §4): đầu phòng là một mốc cố định, không phải một nút,
+       nên nó không đổi nền khi rê chuột qua. */
 
     button:has(svg.mx_RoomHeader_toggled) {
         /* For enhanced visibility under contrast control */
         outline: 1px solid transparent;
     }
-}
-
-.mx_RoomHeader:hover {
-    background-color: $header-panel-bg-hover;
 }
 
 .mx_RoomHeader_infoWrapper {
@@ -62,11 +57,7 @@ Please see LICENSE files in the repository root for full details.
     display: flex;
     gap: var(--cpd-space-1x);
     align-items: center;
-    /* Tên phòng dùng font hiển thị Nunito, đậm & lớn hơn → phân cấp rõ, bớt đơn điệu */
-    font-family: var(--hg-font-display);
-    font-weight: 700;
-    font-size: 1.25rem;
-    letter-spacing: -0.01em;
+    /* Cỡ chữ / sức nặng / tracking của tên phòng: xem _hg-polish.pcss §4. */
 }
 
 .mx_RoomHeader_icon {

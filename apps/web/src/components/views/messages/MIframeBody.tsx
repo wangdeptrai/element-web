@@ -20,17 +20,19 @@ const MIframeBody: React.FC<IProps> = ({ mxEvent }) => {
 
     const sandboxFlags = "allow-forms allow-popups allow-same-origin allow-scripts";
 
+    // Màu lấy từ design token: giá trị cứng trước đây (#111827/#374151) là màu
+    // của theme tối nên khung nhúng thành một mảng đen giữa nền sáng.
     return (
-        <div className="mx_MTextBody" style={{ marginTop: '8px', width: '100%' }}>
+        <div className="mx_MTextBody" style={{ marginTop: "8px", width: "100%" }}>
             <iframe
                 src={iframeUrl}
                 sandbox={sandboxFlags}
                 style={{
-                    width: '100%',
-                    height: '450px',
-                    border: '1px solid #374151',
-                    borderRadius: '12px',
-                    backgroundColor: '#111827'
+                    width: "100%",
+                    height: "450px",
+                    border: "1px solid var(--hg-seam)",
+                    borderRadius: "var(--hg-radius-md)",
+                    backgroundColor: "var(--hg-surface-sunken)",
                 }}
                 title="Embedded UI"
             />
