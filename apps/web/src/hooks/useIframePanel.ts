@@ -53,12 +53,20 @@ export function extractIframeUrl(ev: MatrixEvent): string | null {
     if (content?.msgtype === MsgType.Text || content?.msgtype === "m.text") {
         const raw = content.body;
         if (typeof raw === "string") {
-            const urlRegex = /(https?:\/\/[^\s]+)/;
+            // Bot gửi markdown `[nhãn](url)`, nên `[^\s]+` sẽ nuốt luôn dấu `)` đóng
+            // → route sai → Plane (SPA) trả 200 rồi render 404 ở client. Loại các ký tự
+            // đóng ra khỏi URL, rồi cắt nốt dấu câu cuối câu (link đứng cuối một câu).
+            const urlRegex = /(https?:\/\/[^\s<>"'`)\]}]+)/;
             const match = raw.match(urlRegex);
             if (match) {
                 try {
-                    const parsed = new URL(match[1]);
-                    if (parsed.protocol === "https:" || parsed.protocol === "http:") return parsed.toString();
+                    const parsed = new URL(match[1].replace(/[.,;:!?]+$/, ""));
+                    if (parsed.protocol === "https:" || parsed.protocol === "http:") {
+                        // Bản đem nhúng chạy chế độ gọn của Plane (ẩn nav/rail/breadcrumbs).
+                        // `body` không bị đụng tới, nên link người dùng bấm vẫn là trang đầy đủ.
+                        parsed.searchParams.set("bot", "true");
+                        return parsed.toString();
+                    }
                 } catch {
                     return null;
                 }
